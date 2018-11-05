@@ -1,5 +1,4 @@
 # IMRPhenomD
-# IMRPhenomD
 
 Python version of the algorithm by Khan et al (1508.07253, 1508.07250) for non-precessing, phenomenological waveform modeling. The main file, IMRPhenomD.py, reproduces a GR waveform for given source frame masses, dimensionless spins, luminosity distances, and Neutron Star flag (True or False). All these quantities are in seconds, so use the constants defined in the initial lines to convert (see example code). The other class files contain extensions to GR waveforms, as defined by the parameterized post-Einsteinian framework (0909.3328). The IMRPhenomD_full_mod.py includes a phase modification throughout the entire frequency range (generally suitable for propagation effects), while IMRPhenomD_ins_mod.py only includes the modification in the inspiral portion of the waveform (generally suitable for generation effects)
 
@@ -50,15 +49,13 @@ Add additional notes about how to deploy this on a live system
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+Please email me at scottperkins2@montana.edu if you are interested in contributing.
 
 
 ## Authors
 
 * **Scott Perkins** - *Initial work and Maintenance* - [ScottPerkins](https://github.com/scottperkins)
 * **Nico Yunes** - *Advising and guidance*
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
 ## License
 
