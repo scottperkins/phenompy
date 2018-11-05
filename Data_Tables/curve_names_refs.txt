@@ -1,0 +1,16 @@
+%columns are:
+f, aLIGO, A+, A++, Vrt, Voyager, CE1, CE2 wide, CE2 narrow, ET-B, ET-D
+
+
+refernces:
+A+ (aLIGO +squeezing) and A++: pessimistic and optimistic ranges of http://dx.doi.org/10.1103/PhysRevD.91.062005
+
+Vrt, Voyager: https://dcc.ligo.org/LIGO-T1400226
+
+CE1: (basically A+ in 40 km facility) http://dx.doi.org/10.1103/PhysRevD.91.082001
+
+CE2 wide and CE2 narrow (40km facility, voyager type technology, different signal extraction tuning), Matt Evans is working on a paper about these curves
+
+ET-B http://www.et-gw.eu/etdsdocument  (deescirbes ET B, C and D)
+
+ET-D xylophone http://dx.doi.org/10.1088/0264-9381/27/1/015003
