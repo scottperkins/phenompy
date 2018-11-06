@@ -17,12 +17,12 @@ class Modified_IMRPhenomD(IMRPhenomD):
         self.phic = float(collision_phase)
         self.symmratio = (mass1 * mass2) / (mass1 + mass2 )**2
         self.chirpme =  (mass1 * mass2)**(3/5)/(mass1 + mass2)**(1/5)
-        self.delta = self.calculate_delta(self.symmratio)
+        self.delta = utilities.calculate_delta(self.symmratio)
         self.Z =Distance(Luminosity_Distance/mpc,unit=u.Mpc).compute_z(cosmology = self.cosmo_model)#.01
         self.chirpm = self.chirpme*(1+self.Z)
-        self.M = self.calculate_totalmass(self.chirpm,self.symmratio)
-        self.m1 = self.calculate_mass1(self.chirpm,self.symmratio)
-        self.m2 = self.calculate_mass2(self.chirpm,self.symmratio)
+        self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
+        self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
+        self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
         self.totalMass_restframe = mass1+mass2
         self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
 
@@ -35,7 +35,7 @@ class Modified_IMRPhenomD(IMRPhenomD):
         """Post Newtonian Phase"""
         self.pn_phase = np.zeros(8)
         for i in [0,1,2,3,4,7]:
-            self.pn_phase[i] = self.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
+            self.pn_phase[i] = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
 
         """Numerical Fit Parameters"""
         self.parameters =[]
@@ -45,14 +45,14 @@ class Modified_IMRPhenomD(IMRPhenomD):
         """Post Newtonian Amplitude"""
         self.pn_amp = np.zeros(7)
         for i in np.arange(7):
-            self.pn_amp[i]=self.calculate_pn_amp(self.symmratio,self.delta,self.chi_a,self.chi_s,i)
+            self.pn_amp[i]=utilities.calculate_pn_amp(self.symmratio,self.delta,self.chi_a,self.chi_s,i)
 
         """Post Merger Parameters - Ring Down frequency and Damping frequency"""
-        self.fRD = self.calculate_postmerger_fRD(\
+        self.fRD = utilities.calculate_postmerger_fRD(\
             self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
-        self.fdamp = self.calculate_postmerger_fdamp(\
+        self.fdamp = utilities.calculate_postmerger_fdamp(\
             self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
-        self.fpeak = self.calculate_fpeak(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6])
+        self.fpeak = utilities.calculate_fpeak(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6])
 
 
 
@@ -227,13 +227,13 @@ class Modified_IMRPhenomD(IMRPhenomD):
 
         self.total_mass_deriv = []
         for i in range(2):
-            self.total_mass_deriv.append(grad(self.calculate_totalmass,i)(self.chirpm,self.symmratio))
+            self.total_mass_deriv.append(grad(utilities.calculate_totalmass,i)(self.chirpm,self.symmratio))
         self.mass1_deriv = []
         for i in range(2):
-            self.mass1_deriv.append(grad(self.calculate_mass1,i)(self.chirpm,self.symmratio))
+            self.mass1_deriv.append(grad(utilities.calculate_mass1,i)(self.chirpm,self.symmratio))
         self.mass2_deriv = []
         for i in range(2):
-            self.mass2_deriv.append(grad(self.calculate_mass2,i)(self.chirpm,self.symmratio))
+            self.mass2_deriv.append(grad(utilities.calculate_mass2,i)(self.chirpm,self.symmratio))
         self.lambda_derivs_symmratio=[]
         self.lambda_derivs_chirpm = []
         self.lambda_derivs_chi_a = []
@@ -249,21 +249,21 @@ class Modified_IMRPhenomD(IMRPhenomD):
         self.pn_amp_deriv_chi_a = []
         self.pn_amp_deriv_chi_s = []
         for i in np.arange(len(self.pn_amp)):
-            self.pn_amp_deriv_symmratio.append(grad(self.calculate_pn_amp,0)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
-            self.pn_amp_deriv_delta.append(grad(self.calculate_pn_amp,1)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
-            self.pn_amp_deriv_chi_a.append(grad(self.calculate_pn_amp,2)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
-            self.pn_amp_deriv_chi_s.append(grad(self.calculate_pn_amp,3)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_symmratio.append(grad(utilities.calculate_pn_amp,0)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_delta.append(grad(utilities.calculate_pn_amp,1)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_chi_a.append(grad(utilities.calculate_pn_amp,2)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_chi_s.append(grad(utilities.calculate_pn_amp,3)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
         self.pn_phase_deriv_chirpm = []
         self.pn_phase_deriv_symmratio = []
         self.pn_phase_deriv_delta = []
         self.pn_phase_deriv_chi_a = []
         self.pn_phase_deriv_chi_s = []
         for i in np.arange(len(self.pn_phase)):
-            self.pn_phase_deriv_chirpm.append(grad(self.calculate_pn_phase,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_symmratio.append(grad(self.calculate_pn_phase,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_delta.append(grad(self.calculate_pn_phase,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_chi_a.append(grad(self.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_chi_s.append(grad(self.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_chirpm.append(grad(utilities.calculate_pn_phase,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_symmratio.append(grad(utilities.calculate_pn_phase,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_delta.append(grad(utilities.calculate_pn_phase,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_chi_a.append(grad(utilities.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_chi_s.append(grad(utilities.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
         """Delta Parameters take up ~50 percent of the total time"""
 
         temp1 = grad(self.calculate_delta_parameter,0)
@@ -286,17 +286,17 @@ class Modified_IMRPhenomD(IMRPhenomD):
         # print("deltas: {}".format(time()-start))
         self.fRD_deriv = []
         for i in range(6):
-            self.fRD_deriv.append(grad(self.calculate_postmerger_fRD,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
+            self.fRD_deriv.append(grad(utilities.calculate_postmerger_fRD,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
         self.fdamp_deriv = []
         for i in range(6):
-            self.fdamp_deriv.append(grad(self.calculate_postmerger_fdamp,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
+            self.fdamp_deriv.append(grad(utilities.calculate_postmerger_fdamp,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
         self.fpeak_deriv = []
         for i in range(5):
-            self.fpeak_deriv.append(grad(self.calculate_fpeak,i)(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6]))
+            self.fpeak_deriv.append(grad(utilities.calculate_fpeak,i)(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6]))
 
         """Only deviations from original IMRPhenomD are below: extra derivative for beta1,beta0, and extra log_factor"""
         ########################################################################################################################
-        self.delta_deriv = grad(self.calculate_delta)(self.symmratio)
+        self.delta_deriv = grad(utilities.calculate_delta)(self.symmratio)
         self.beta1_deriv = []
         self.beta0_deriv = []
         self.alpha1_deriv = []
@@ -621,7 +621,7 @@ class Modified_IMRPhenomD(IMRPhenomD):
         Z2 = Zfunc((GW15DL-Rvs)/mpc)
         D = (1+GW15Z)*(Dfunc(Z2)*mpc - Dfunc(Z1)*mpc)
         return (D*np.pi**2*GW15chirpm/((1+GW15Z)*GW15DeltaBeta))**(1/2)
-        
+
 
     """Returns figure object that is the shaded plot of allowable graviton wavelengths vs vainshtein radius
     -args:

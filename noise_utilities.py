@@ -2,7 +2,7 @@
  as well as analytic curves for various detectors"""
 import csv
 import os
-import numpy as np
+import autograd.numpy as np
 
 """Path variables"""
 IMRPD_dir = os.path.dirname(os.path.realpath(__file__))

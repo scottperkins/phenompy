@@ -21,17 +21,22 @@ from scipy.interpolate import interp1d
 from noise_utilities import *
 import utilities
 print("YOU JUST IMPORTED THE NEW IMRPHENOMD !!!!")
-plt.style.use('seaborn-whitegrid')
 
-"""Euler's Number (Not in SciPy or NumPy Constants)"""
-gamma_E = 0.5772156649015328606065120900824024310421
-"""Physical Constants - importable with IMRPhenomD.constant"""
+"""NOTE: the values are commented out below to match the previous code
+- should be uncommented before publication"""
+# c = consts.c.value #Speed of light m/s
+# G = consts.G.to('m3/(s2 kg)').value*consts.M_sun.value #Gravitational constant in m**3/(s**2 SolMass)=6.674*10**(-11)*(1.98855*10**30)
+# s_solm = G / consts.c.value**3#G/c**3#seconds per solar mass =492549095*10**(-14)
+# mpc = 1/consts.c.to('Mpc/s').value#consts.kpc.to('m')*1000/c#Mpc in sec =3085677581*10**(13)/c
+# H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
+# hplanck = consts.h.to('eV s').value #Planck Constant in eV s
 c = 299792458#consts.c #Speed of light m/s
-G = consts.G.to('m3/(s2 kg)').value*consts.M_sun.value #Gravitational constant in m**3/(s**2 SolMass)=6.674*10**(-11)*(1.98855*10**30)
-s_solm = G / consts.c.value**3#G/c**3#seconds per solar mass =492549095*10**(-14)
-mpc = 1/consts.c.to('Mpc/s').value#consts.kpc.to('m')*1000/c#Mpc in sec =3085677581*10**(13)/c
+G = 6.674*10**(-11)*(1.98855*10**30)#consts.G.to('m**3/(s**2*solMass)') #Gravitational constant in m**3/(s**2 SolMass)
+s_solm =492549095*10**(-14) #G/c**3#seconds per solar mass
+mpc = 3085677581*10**(13)/c #consts.kpc.to('m')*1000/c#Mpc in sec
 H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
-hplanck = consts.h.to('eV s').value #Planck Constant in eV s
+hplanck = 4.135667662e-15 #ev s
+
 
 """Path variables"""
 IMRPD_dir = os.path.dirname(os.path.realpath(__file__))
@@ -56,24 +61,6 @@ with open(IMRPD_tables_dir+'/IMRPhenomDParameters_APS.csv','r') as f:
             rowconvert.append(float(eval(x)))
         Lambda[i] = rowconvert
         i += 1
-#
-# """Read in csv file with noise curve data for Fisher Analysis - aLIGO is column 1 and freq is column 0"""
-# noise = []
-# for i in range(11):
-#     noise.append([])
-# with open(IMRPD_tables_dir+'/curves.csv', 'r') as file:
-#     reader = csv.reader(file)
-#     for row in reader:
-#         for i in np.arange(len(row)):
-#             noise[i].append(float(row[i]))
-# noise_lisa = [[],[],[]]
-# with open(IMRPD_tables_dir+'/NewLISATable.dat','r') as file:
-#     reader = csv.reader(file,delimiter="\t")
-#     for line in reader:
-#         noise_lisa[0].append(float(line[0]))
-#         noise_lisa[1].append(float(line[1]))
-#         noise_lisa[2].append(float(line[2]))
-
 
 """For Data imported below, see the script ./Data_Tables/tabulate_data.py for production of values and accuracy testing"""
 """Read in tabulated data for the luminosity distance to Z conversion - tabulated and interpolated for speed"""
@@ -125,12 +112,12 @@ class IMRPhenomD():
         self.phic = float(collision_phase)
         self.symmratio = (mass1 * mass2) / (mass1 + mass2 )**2
         self.chirpme =  (mass1 * mass2)**(3/5)/(mass1 + mass2)**(1/5)
-        self.delta = self.calculate_delta(self.symmratio)
+        self.delta = utilities.calculate_delta(self.symmratio)
         self.Z =Distance(Luminosity_Distance/mpc,unit=u.Mpc).compute_z(cosmology = self.cosmo_model)
         self.chirpm = self.chirpme*(1+self.Z)
         self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
-        self.m1 = self.calculate_mass1(self.chirpm,self.symmratio)
-        self.m2 = self.calculate_mass2(self.chirpm,self.symmratio)
+        self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
+        self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
         self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
         self.totalMass_restframe = mass1+mass2
         """Spin Variables"""
@@ -142,7 +129,7 @@ class IMRPhenomD():
         """Post Newtonian Phase"""
         self.pn_phase = np.zeros(8)
         for i in [0,1,2,3,4,7]:
-            self.pn_phase[i] = self.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
+            self.pn_phase[i] = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
 
         """Numerical Fit Parameters"""
         self.parameters =[]
@@ -152,14 +139,14 @@ class IMRPhenomD():
         """Post Newtonian Amplitude"""
         self.pn_amp = np.zeros(7)
         for i in np.arange(7):
-            self.pn_amp[i]=self.calculate_pn_amp(self.symmratio,self.delta,self.chi_a,self.chi_s,i)
+            self.pn_amp[i]=utilities.calculate_pn_amp(self.symmratio,self.delta,self.chi_a,self.chi_s,i)
 
         """Post Merger Parameters - Ring Down frequency and Damping frequency"""
-        self.fRD = self.calculate_postmerger_fRD(\
+        self.fRD = utilities.calculate_postmerger_fRD(\
             self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
-        self.fdamp = self.calculate_postmerger_fdamp(\
+        self.fdamp = utilities.calculate_postmerger_fdamp(\
             self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
-        self.fpeak = self.calculate_fpeak(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6])
+        self.fpeak = utilities.calculate_fpeak(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6])
 
         """Calculating the parameters for the intermediate amplitude region"""
         self.param_deltas = np.zeros(5)
@@ -174,37 +161,6 @@ class IMRPhenomD():
         self.alpha0 = self.phase_cont_alpha0(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.alpha1)
         self.var_arr = [self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a]
 
-    """Calculates the total mass given symmratio and chirp mass"""
-    # def calculate_totalmass(self,chirpm,symmratio):return chirpm*symmratio**(-3/5)
-
-    """Calculates the redshift given a luminosity distance"""
-    def calculate_Z(self,DL):
-        """Interpolates the luminosity distance vs Z relationship for the standard cosmology
-        argument: Luminosity Distance in sec"""
-        OmegaM = .3
-        OmegaL = .7
-        zTable = np.arange(0,10.01,.01)
-        DLTable = [ (1+z1)/H0 * integrate.quad(lambda z2: ((OmegaM)*(1+z2)**3 +OmegaL)**(-1/2) ,0 , z1)[0] for z1 in zTable]
-        return CubicSpline(DLTable,zTable)(DL/mpc)
-
-    """Calculates the individual masses given symmratio and chirp mass"""
-    ###########################################################################################################
-    def calculate_mass1(self,chirpm,symmratio):
-        return 1/2*(chirpm / symmratio**(3/5) \
-        + np.sqrt(1-4*symmratio)*chirpm / symmratio**(3/5))
-
-    def calculate_mass2(self,chirpm,symmratio):
-        return 1/2*(chirpm / symmratio**(3/5) \
-        - np.sqrt(1-4*symmratio)*chirpm / symmratio**(3/5))
-    ###########################################################################################################
-
-    """calculate fpeak"""
-    def calculate_fpeak(self,M,fRD,fdamp,gamma2,gamma3):return abs(fRD + fdamp*gamma3*(np.sqrt(1-gamma2**2)-1)/gamma2)
-
-    """Calculate delta parameter"""
-    def calculate_delta(self,symmratio):return np.sqrt(1-4*symmratio)
-
-    ###########################################################################################################
     """Calculates the parameters beta0, alpha0, beta1, and alpha1 based on the condition that the phase is continuous
     across the boundary"""
     def phase_cont_beta1(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s):
@@ -213,7 +169,7 @@ class IMRPhenomD():
         pn_phase =[]
         for x in np.arange(len(self.pn_phase)):
             pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
-            # pn_phase.append(self.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
+            # pn_phase.append(utilities.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
@@ -242,7 +198,7 @@ class IMRPhenomD():
         pn_phase =[]
         for x in np.arange(len(self.pn_phase)):
             pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
-            # pn_phase.append(self.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
+            # pn_phase.append(utilities.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
@@ -301,57 +257,6 @@ class IMRPhenomD():
 
         else: return utilities.calculate_delta_parameter_4(f1,f2,f3,v1,v2,v3,dd1,dd3,M)
 
-
-    ###########################################################################################################
-    """Caclulate the post merger paramters fRD and fdamp
-    from the kerr parameter a = J/M**2 - the relationship between a and fRD,f_damp
-    is numerical - interpolated data from http://www.phy.olemiss.edu/~berti/ringdown/ - 0905.2975
-    a has a numerical fit from the khan phenomD paper and is a function of the
-    symmetric mass ratio and the total initial spin
-    the final parameters are then determined from omega = omegaM/(M - energry radiated)"""
-    def calculate_postmerger_fRD(self,m1,m2,M,symmratio,chi_s,chi_a):
-        chi1 = chi_s+chi_a
-        chi2 = chi_s - chi_a
-        S = (chi1*m1**2 + chi2*m2**2)/M**2 #convert chi to spin s in z direction
-        S_red = S/(1-2*symmratio)
-
-        a = S + 2*np.sqrt(3)*symmratio - 4.399*symmratio**2 + 9.397*symmratio**3 - \
-        13.181*symmratio**4 +(-0.085*S +.102*S**2 -1.355*S**3 - 0.868*S**4)*symmratio + \
-        (-5.837*S -2.097*S**2 +4.109*S**3 +2.064*S**4)*symmratio**2
-
-        E_rad_ns = 0.0559745*symmratio +0.580951*symmratio**2 - \
-        0.960673*symmratio**3 + 3.35241*symmratio**4
-
-        E_rad = E_rad_ns*(1+S_red*(-0.00303023 - 2.00661*symmratio +7.70506*symmratio**2)) / \
-        (1+ S_red*(-0.67144 - 1.47569*symmratio +7.30468*symmratio**2))
-
-        #Calculate the post merger frequencies from numerical data
-        MWRD = (1.5251-1.1568*(1-a)**0.1292)
-        fRD = (1/(2*np.pi))*(MWRD)/(M*(1 - E_rad))
-        return fRD
-
-    def calculate_postmerger_fdamp(self,m1,m2,M,symmratio,chi_s,chi_a):
-        chi1 = chi_s+chi_a
-        chi2 = chi_s - chi_a
-        S = (chi1*m1**2 + chi2*m2**2)/M**2 #convert chi to spin s in z direction
-        S_red = S/(1-2*symmratio)
-
-        a = S + 2*np.sqrt(3)*symmratio - 4.399*symmratio**2 + 9.397*symmratio**3 - \
-        13.181*symmratio**4 +(-0.085*S +.102*S**2 -1.355*S**3 - 0.868*S**4)*symmratio + \
-        (-5.837*S -2.097*S**2 +4.109*S**3 +2.064*S**4)*symmratio**2
-
-        E_rad_ns = 0.0559745*symmratio +0.580951*symmratio**2 - \
-        0.960673*symmratio**3 + 3.35241*symmratio**4
-
-        E_rad = E_rad_ns*(1+S_red*(-0.00303023 - 2.00661*symmratio +7.70506*symmratio**2)) / \
-        (1+ S_red*(-0.67144 - 1.47569*symmratio +7.30468*symmratio**2))
-
-        #Calculate the post merger frequencies from numerical data
-        MWdamp = ((1.5251-1.1568*(1-a)**0.1292)/(2*(0.700 + 1.4187*(1-a)**(-.4990))))
-        fdamp = (1/(2*np.pi))*(MWdamp)/(M*(1 - E_rad))
-        return fdamp
-    ###########################################################################################################
-
     """Caluculates the parameters from the Lambda matrix defined above.
     Indices are as follows: parameters[i] for i element of {0,19}:
     order of parameters: rho{1,2,3},v2,gamma{1,2,3},sigma{1,2,3,4},beta{1,2,3},alpha{1,2,3,4,5}"""
@@ -374,67 +279,14 @@ class IMRPhenomD():
 
         return parameter
 
-    """Post Newtonian approximation for the inspiral amplitude for the ith (\el {0,1,2,3,4,5,6}) parameter"""
-    def calculate_pn_amp(self,symmratio,massdelta,chi_a,chi_s,i):
-        if i == 0: return 1.
-        elif i ==1: return 0.
-        elif i == 2: return -323/224 + 451*symmratio/168
-        elif i ==3: return 27*massdelta*chi_a/8 + (27/8 - 11*symmratio/6)*chi_s
-        elif i == 4: return -27312085/8128512 - 1975055*symmratio/338688 + \
-        105271*symmratio**2/24192 + (-81/32 + 8*symmratio)*chi_a**2 - \
-        81*massdelta*chi_a*chi_s/16 + (-81/32 + 17*symmratio/8)*chi_s**2
-
-        elif i == 5: return -85*np.pi/64 + 85*np.pi*symmratio/16 + massdelta*(285197/16128 - \
-        1579*symmratio/4032)*chi_a + (285197/16128 - 15317*symmratio/672 - \
-        2227*symmratio**2/1008)*chi_s
-
-        else: return -177520268561/8583708672 + (545384828789/5007163392 - 205*np.pi**2/48)*symmratio - \
-        3248849057*symmratio**2/178827264 + 34473079*symmratio**3/6386688 + \
-        (1614569/64512 - 1873643*symmratio/16128 + 2167*symmratio**2/42)*chi_a**2 + \
-        (31*np.pi/12 - 7*np.pi*symmratio/3)*chi_s + (1614569/64512 - 61391*symmratio/1344 + \
-        57451*symmratio**2/4032)*chi_s**2 + \
-        massdelta*chi_a*(31*np.pi/12 + (1614569/32256 - 165961*symmratio/2688)*chi_s)
-
-
-    """calculates the 8 coefficients for PN expansion for the phase as a function of freq. f for the ith (\el {0,1,2,3,4,5,6,7,8}) parameter"""
-    def calculate_pn_phase(self, chirpm,symmratio,delta,chi_a,chi_s,f,i):
-        """5 and 6 depend on the given freq."""
-        M = self.assign_totalmass(chirpm,symmratio)
-        if i == 0:return 1.
-        elif i == 1: return 0.
-        elif i == 2: return 3715/756 + 55*symmratio/9
-        elif i == 3: return -16*np.pi + 113*delta*chi_a/3 + \
-        (113/3 - 76*symmratio/3)*chi_s
-
-        elif i ==4: return 15293365/508032 + 27145*symmratio/504 + 3085*symmratio**2/72 + \
-        (-405/8 + 200*symmratio)*chi_a**2 - \
-        (405/4)*delta*chi_a*chi_s +\
-        (-405/8 + 5*symmratio/2)*chi_s**2
-
-        elif i == 7: return 77096675*np.pi/254016 + 378515*np.pi*symmratio/1512 - \
-        74045*np.pi*symmratio**2/756 + delta*(-25150083775/3048192 + \
-        26804935*symmratio/6048 - 1985*symmratio**2/48)*chi_a + \
-        (-25150083775/3048192 + 10566655595*symmratio/762048 - \
-        1042165*symmratio**2/3024 + 5345*symmratio**3/36)*chi_s
-
-        elif i ==5: return (1 + np.log(np.pi*M*f))* (38645*np.pi/756 - 65*np.pi*symmratio/9 + \
-        delta*(-732985/2268 - 140*symmratio/9)*chi_a + \
-        (-732985/2268 + 24260*symmratio/81 + 340*symmratio**2/9)*chi_s)
-
-        else: return  11583231236531/4694215680 - 6848*gamma_E/21 -\
-         640*np.pi**2/3 + (-15737765635/3048192 + 2255*np.pi**2/12)*symmratio + \
-         76055*symmratio**2/1728 - 127825*symmratio**3/1296 \
-          + 2270*delta*chi_a*np.pi/3 + \
-         (2270*np.pi/3 - 520*np.pi*symmratio)*chi_s - 6848*np.log(64*np.pi*M*f)/63
-
     """Fundamental Waveform Functions"""
     ###########################################################################################################
     """Calculates the phase of the inspiral range of the GW as a function of freq. f"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase):
         """calculate pn phase - Updates the PN coeff. for a given freq."""
         M = self.assign_totalmass(chirpm,symmratio)
-        temp5 = self.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,5)
-        temp6 = self.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,6)
+        temp5 = utilities.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,5)
+        temp6 = utilities.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,6)
         """autograd doesn't handle array assignment very well - need to re-instantiate array"""
         phasepn = [pn_phase[0],pn_phase[1],pn_phase[2],pn_phase[3],pn_phase[4],temp5,temp6,pn_phase[7]]
         pnsum = 0
@@ -602,52 +454,7 @@ class IMRPhenomD():
         fphase = self.split_freqs_phase(freq)
         jamp=[0,1,2]
         jphase=[0,1,2]
-        # if len(famp[0]) == 0:
-        #     if len(famp[1])==0:
-        #         jamp = [2]
-        #     else:
-        #         if len(famp[2])==0:
-        #             jamp = [1]
-        #         else:
-        #             jamp = [1,2]
-        # if len(famp[2])==0:
-        #     if len(famp[1]) == 0:
-        #         jamp = [0]
-        #     else:
-        #         if len(famp[0])==0:
-        #             jamp = [1]
-        #         else:
-        #             jamp = [0,1]
-        #######################################
-        # if len(famp[0]) ==0 and len(famp[1]) and len(famp[2])==0:
-        #     print( "error")
-        # elif len(famp[0]) ==0 and len(famp[1])==0:
-        #     jamp = [2]
-        # elif len(famp[1])==0 and len(famp[2])==0:
-        #     jamp = [0]
-        # elif len(famp[0])==0:
-        #     jamp = [1,2]
-        # elif len(famp[1])==0:
-        #     jamp = [2]
-        # elif len(famp[0])==0 and len(famp[2])==0:
-        #     jamp = [1]
-        #################################################
-        # if len(fphase[0]) == 0:
-        #     if len(fphase[1])==0:
-        #         jphase = [2]
-        #     else:
-        #         if len(fphase[2])==0:
-        #             jphase = [1]
-        #         else:
-        #             jphase = [1,2]
-        # if len(fphase[2])==0:
-        #     if len(fphase[1]) == 0:
-        #         jphase = [0]
-        #     else:
-        #         if len(fphase[0])==0:
-        #             jphase = [1]
-        #         else:
-        #             jphase = [0,1]
+
         jamp = [0,1,2]
         for i in np.arange(len(famp)):
             if len(famp[i]) == 0:
@@ -788,10 +595,10 @@ class IMRPhenomD():
             self.total_mass_deriv.append(grad(utilities.calculate_totalmass,i)(self.chirpm,self.symmratio))
         self.mass1_deriv = []
         for i in range(2):
-            self.mass1_deriv.append(grad(self.calculate_mass1,i)(self.chirpm,self.symmratio))
+            self.mass1_deriv.append(grad(utilities.calculate_mass1,i)(self.chirpm,self.symmratio))
         self.mass2_deriv = []
         for i in range(2):
-            self.mass2_deriv.append(grad(self.calculate_mass2,i)(self.chirpm,self.symmratio))
+            self.mass2_deriv.append(grad(utilities.calculate_mass2,i)(self.chirpm,self.symmratio))
         self.lambda_derivs_symmratio=[]
         self.lambda_derivs_chirpm = []
         self.lambda_derivs_chi_a = []
@@ -807,92 +614,51 @@ class IMRPhenomD():
         self.pn_amp_deriv_chi_a = []
         self.pn_amp_deriv_chi_s = []
         for i in np.arange(len(self.pn_amp)):
-            self.pn_amp_deriv_symmratio.append(grad(self.calculate_pn_amp,0)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
-            self.pn_amp_deriv_delta.append(grad(self.calculate_pn_amp,1)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
-            self.pn_amp_deriv_chi_a.append(grad(self.calculate_pn_amp,2)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
-            self.pn_amp_deriv_chi_s.append(grad(self.calculate_pn_amp,3)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_symmratio.append(grad(utilities.calculate_pn_amp,0)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_delta.append(grad(utilities.calculate_pn_amp,1)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_chi_a.append(grad(utilities.calculate_pn_amp,2)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
+            self.pn_amp_deriv_chi_s.append(grad(utilities.calculate_pn_amp,3)(self.symmratio,self.delta,self.chi_a,self.chi_s,i))
         self.pn_phase_deriv_chirpm = []
         self.pn_phase_deriv_symmratio = []
         self.pn_phase_deriv_delta = []
         self.pn_phase_deriv_chi_a = []
         self.pn_phase_deriv_chi_s = []
         for i in np.arange(len(self.pn_phase)):
-            self.pn_phase_deriv_chirpm.append(grad(self.calculate_pn_phase,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_symmratio.append(grad(self.calculate_pn_phase,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_delta.append(grad(self.calculate_pn_phase,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_chi_a.append(grad(self.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
-            self.pn_phase_deriv_chi_s.append(grad(self.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_chirpm.append(grad(utilities.calculate_pn_phase,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_symmratio.append(grad(utilities.calculate_pn_phase,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_delta.append(grad(utilities.calculate_pn_phase,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_chi_a.append(grad(utilities.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
+            self.pn_phase_deriv_chi_s.append(grad(utilities.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
         """Delta Parameters take up ~50 percent of the total time"""
         start=time()
-        # self.param_deltas_derivs_chirpm = []
-        # self.param_deltas_derivs_symmratio = []
-        # self.param_deltas_derivs_delta = []
-        # self.param_deltas_derivs_chi_a = []
-        # self.param_deltas_derivs_chi_s = []
-        # self.param_deltas_derivs_fRD = []
-        # self.param_deltas_derivs_fdamp = []
-        # self.param_deltas_derivs_f3 = []
-        # for i in np.arange(len(self.param_deltas)):
-        #     self.param_deltas_derivs_chirpm.append(grad(self.calculate_delta_parameter,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_symmratio.append(grad(self.calculate_delta_parameter,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_delta.append(grad(self.calculate_delta_parameter,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_chi_a.append(grad(self.calculate_delta_parameter,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_chi_s.append(grad(self.calculate_delta_parameter,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_fRD.append(grad(self.calculate_delta_parameter,5)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_fdamp.append(grad(self.calculate_delta_parameter,6)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-        #     self.param_deltas_derivs_f3.append(grad(self.calculate_delta_parameter,7)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
-
-        temp1 = grad(self.calculate_delta_parameter,0)
-        temp2 = grad(self.calculate_delta_parameter,1)
-        temp3 = grad(self.calculate_delta_parameter,2)
-        temp4 = grad(self.calculate_delta_parameter,3)
-        temp5 = grad(self.calculate_delta_parameter,4)
-        temp6 = grad(self.calculate_delta_parameter,5)
-        temp7 = grad(self.calculate_delta_parameter,6)
-        temp8 = grad(self.calculate_delta_parameter,7)
-        self.param_deltas_derivs_chirpm = list(map(lambda i:temp1(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_symmratio = list(map(lambda i:temp2(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_delta = list(map(lambda i:temp3(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_chi_a = list(map(lambda i:temp4(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_chi_s = list(map(lambda i:temp5(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_fRD = list(map(lambda i:temp6(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_fdamp = list(map(lambda i:temp7(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        self.param_deltas_derivs_f3 = list(map(lambda i:temp8(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-
-        # vdelta = np.vectorize(self.calculate_delta_parameter)
-        # temp1 = egrad(vdelta,0)
-        # temp2 = egrad(vdelta,1)
-        # temp3 = grad(vdelta,2)
-        # temp4 = grad(vdelta,3)
-        # temp5 = grad(vdelta,4)
-        # temp6 = grad(vdelta,5)
-        # temp7 = grad(vdelta,6)
-        # temp8 = grad(vdelta,7)
-        # print(temp1(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,1))
-        # num_deltas = np.arange(5)
-        # num_deltas, varrchirpm = np.broadcast_arrays(num_deltas,self.chirpm)
-        # self.param_deltas_derivs_chirpm = temp1(varrchirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak, np.arange(5) )
-        # num_deltas, varrsymmratio = np.broadcast_arrays(num_deltas,self.symmratio)
-        # self.param_deltas_derivs_symmratio = temp2(self.chirpm,varrsymmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak, np.arange(5) )
-        # print(self.param_deltas_derivs_symmratio)
-        # self.param_deltas_derivs_delta = list(map(lambda i:temp3(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        # self.param_deltas_derivs_chi_a = list(map(lambda i:temp4(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        # self.param_deltas_derivs_chi_s = list(map(lambda i:temp5(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        # self.param_deltas_derivs_fRD = list(map(lambda i:temp6(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        # self.param_deltas_derivs_fdamp = list(map(lambda i:temp7(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        # self.param_deltas_derivs_f3 = list(map(lambda i:temp8(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i), np.arange(5) ))
-        # print("deltas: {}".format(time()-start))
+        self.param_deltas_derivs_chirpm = []
+        self.param_deltas_derivs_symmratio = []
+        self.param_deltas_derivs_delta = []
+        self.param_deltas_derivs_chi_a = []
+        self.param_deltas_derivs_chi_s = []
+        self.param_deltas_derivs_fRD = []
+        self.param_deltas_derivs_fdamp = []
+        self.param_deltas_derivs_f3 = []
+        for i in np.arange(len(self.param_deltas)):
+            self.param_deltas_derivs_chirpm.append(grad(self.calculate_delta_parameter,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_symmratio.append(grad(self.calculate_delta_parameter,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_delta.append(grad(self.calculate_delta_parameter,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_chi_a.append(grad(self.calculate_delta_parameter,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_chi_s.append(grad(self.calculate_delta_parameter,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_fRD.append(grad(self.calculate_delta_parameter,5)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_fdamp.append(grad(self.calculate_delta_parameter,6)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
+            self.param_deltas_derivs_f3.append(grad(self.calculate_delta_parameter,7)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i))
 
         self.fRD_deriv = []
         for i in range(6):
-            self.fRD_deriv.append(grad(self.calculate_postmerger_fRD,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
+            self.fRD_deriv.append(grad(utilities.calculate_postmerger_fRD,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
         self.fdamp_deriv = []
         for i in range(6):
-            self.fdamp_deriv.append(grad(self.calculate_postmerger_fdamp,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
+            self.fdamp_deriv.append(grad(utilities.calculate_postmerger_fdamp,i)(self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a))
         self.fpeak_deriv = []
         for i in range(5):
-            self.fpeak_deriv.append(grad(self.calculate_fpeak,i)(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6]))
-        self.delta_deriv = grad(self.calculate_delta)(self.symmratio)
+            self.fpeak_deriv.append(grad(utilities.calculate_fpeak,i)(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6]))
+        self.delta_deriv = grad(utilities.calculate_delta)(self.symmratio)
         self.beta1_deriv = []
         self.beta0_deriv = []
         self.alpha1_deriv = []
@@ -923,18 +689,6 @@ class IMRPhenomD():
         return grad(self.full_amp,i)(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)-\
             self.full_amp(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)* grad(self.full_phi,i)(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)*1j
 
-    # """Analytic noise curve from Will '97, for testing - aLIGOAnalytic"""
-    # def sym_noise_curve(self,f):
-    #     S = 3e-48
-    #     fknee = 70.
-    #     return np.sqrt(S * ((fknee/f)**4 + 2 + 2*(f/fknee)**2)/5)
-    # """Returns a fitted S**(1/2) curve of Hanford O(1) noise data - see 1603.08955 appendix C"""
-    # def fitted_hanford_noise(self, f):
-    #     a_vec = np.array([47.8466,-92.1896,35.9273,-7.61447,0.916742,-0.0588089,0.00156345],dtype=float)
-    #     S0 = .8464
-    #     x = np.log(f)
-    #     return (np.sqrt(S0) * np.exp(a_vec[0] + a_vec[1]*x + a_vec[2]*x**2 +
-    #             a_vec[3] * x**3 + a_vec[4]*x**4 + a_vec[5]*x**5 + a_vec[6]*x**6))
     def calculate_upper_freq(self,freq,detector):
         """Finds indicies of frequency that are elements of [800,10000] and trims freq and noise to match"""
         if detector != 'LISA':
@@ -956,15 +710,6 @@ class IMRPhenomD():
             ratio_table = np.abs(np.divide(np.multiply(np.sqrt(trimmed_freq),self.calculate_waveform_vector(trimmed_freq)[0]),trimmed_noise))
             fup = trimmed_freq[np.where(ratio_table<.1)[0][0]]
 
-        ####################################################################
-        #Testing
-        ####################################################################
-        #print(trimmed_freq)
-        # plt.plot(np.log(trimmed_freq),np.log(np.divide(np.multiply(np.sqrt(trimmed_freq),self.calculate_waveform_vector(trimmed_freq)[0]),trimmed_noise)))
-        # plt.show()
-        # plt.close()
-        ####################################################################
-        # waveform = self.full_waveform(trimmed_freq)[0]
         if self.NSflag:
             Rcontact = 24./3e5
             fcontact = (1/np.pi)*(np.sqrt(self.totalMass_restframe/Rcontact**3))
@@ -987,8 +732,6 @@ class IMRPhenomD():
         ratio_table =  np.abs(np.divide(np.multiply(np.sqrt(trimmed_freq),self.calculate_waveform_vector(trimmed_freq)[0]),trimmed_noise))
         """Finds indexes where the integrand is <.1 - returns 1 if all elements are >.1"""
         index_list = np.where(ratio_table<0.1)[0]
-        # print(index_list)
-        # print(ratio_table[index_list])
         if len(index_list) == 0:
             if detector != 'LISA':
                 return 1
@@ -1000,6 +743,7 @@ class IMRPhenomD():
             return 1+0.1*trimmed_freq[index]
         else:
             return 0.1*trimmed_freq[index]
+
     """Calcualtes the Fisher and the Inverse Fisher
     args: detector = 'aLIGO', 'aLIGOAnalytic' int_scheme = 'simps','trapz','quad', stepsize= float
     options aLIGOAnalytic and stepsize are purely for testing. The real data has these set.
@@ -1020,10 +764,6 @@ class IMRPhenomD():
             self.noise_curve = noise[names.index(detector)+1]
             if int_scheme == 'quad':
                 self.noise_func = CubicSpline(noise[0],self.noise_curve)
-        # if detector == 'aLIGO':
-        #     self.noise_curve = noise[1]
-        #     if int_scheme == 'quad':
-        #         self.noise_func = CubicSpline(noise[0],self.noise_curve)
         elif detector == 'LISA':
             self.noise_curve = noise_lisa[1]
             freq = noise_lisa[0]
@@ -1258,12 +998,8 @@ class IMRPhenomD():
 
         self.noise_curve, self.noise_func, freq = self.populate_noise(detector, int_scheme, stepsize)
 
-
-        #STARTING AT 20HZ BECASUE YYP DID IN THEIR PAPER - TESTING ONLY
         self.lower_freq =self.calculate_lower_freq(freq,detector=detector)#self.flower
         self.upper_freq = self.calculate_upper_freq(freq,detector=detector)#self.fupper
-
-        # print("lower: {}".format(self.lower_freq),"upper: {}".format(self.upper_freq))
 
         ## Almost entire time is spent here ##
         """Pre-populate Derivative arrays for faster evaluation"""
@@ -1321,16 +1057,6 @@ class IMRPhenomD():
                     else:
                         fisher[i-1][j-1]= int_func(integrand,int_freq)
 
-        ##########################################################################################
-        #TESTING - CONVERTS FROM CHIRPM TO CHIRPME
-        # for i in np.arange(len(fisher)):
-        #     for j in np.arange(len(fisher[0])):
-        #         if i == 3 or j ==3:
-        #             if i == 3 and j ==3:
-        #                 fisher[i][j] = fisher[i][j]/(1+self.Z)**2
-        #             else:
-        #                 fisher[i][j] = fisher[i][j]/(1+self.Z)
-
 
         fisher = fisher + np.transpose(fisher)
         try:
@@ -1372,8 +1098,6 @@ class IMRPhenomD():
 
         """Trim Frequencies to seperate which stage to apply (ins,int,mr)"""
         int_freq = np.asarray(freq[flow_pos:fup_pos])#np.asarray(freq)#
-        # print(int_freq[0],int_freq[-1])
-        # print(freq[0],freq[-1])
         noise_integrand = self.noise_curve[flow_pos:fup_pos]#np.asarray(self.noise_curve)#
         amp,phase,wave = self.calculate_waveform_vector(int_freq)
         Asquared = np.multiply(amp,amp)
@@ -1480,44 +1204,44 @@ class IMRPhenomD():
     @primitive
     def assign_pn_phase(self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i):
         if i in [5,6]:
-            return  self.calculate_pn_phase(chirpm,symmratio,massdelta,chi_a,chi_s,f,i)
+            return  utilities.calculate_pn_phase(chirpm,symmratio,massdelta,chi_a,chi_s,f,i)
         for j in [chirpm,massdelta,symmratio,chi_a,chi_s,f]:
             if isinstance(j,np.ndarray):
                 return np.ones(len(j))*self.pn_phase[i]
         return self.pn_phase[i]
     defvjp(assign_pn_phase,None,
                 lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_chirpm(f,i),
-                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_symmratio(f,i),#grad(self.calculate_pn_phase,0)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_symmratio[i],
-                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_delta(f,i),#grad(self.calculate_pn_phase,1)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_delta[i],
-                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_chi_a(f,i),#grad(self.calculate_pn_phase,2)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_chi_a[i],
-                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_chi_s(f,i),#grad(self.calculate_pn_phase,3)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_chi_s[i],
-                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*grad(self.calculate_pn_phase,5)(chirpm,symmratio,massdelta,chi_a,chi_s,f,i),None)
+                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_symmratio(f,i),#grad(utilities.calculate_pn_phase,0)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_symmratio[i],
+                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_delta(f,i),#grad(utilities.calculate_pn_phase,1)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_delta[i],
+                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_chi_a(f,i),#grad(utilities.calculate_pn_phase,2)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_chi_a[i],
+                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*self.grad_pn_phase_sorter_chi_s(f,i),#grad(utilities.calculate_pn_phase,3)(symmratio,massdelta,chi_a,chi_s,f,i),#g*self.pn_phase_deriv_chi_s[i],
+                lambda ans,self,chirpm,symmratio,massdelta,chi_a,chi_s,f,i: lambda g: g*grad(utilities.calculate_pn_phase,5)(chirpm,symmratio,massdelta,chi_a,chi_s,f,i),None)
     """Sorter functions to handle the frequency dependent elements of pn_phase"""
     def grad_pn_phase_sorter_chirpm(self,f,i):
         if i in [0,1,2,3,4,7]:
             return self.pn_phase_deriv_chirpm[i]
         else:
-            return egrad(self.calculate_pn_phase,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
+            return egrad(utilities.calculate_pn_phase,0)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
     def grad_pn_phase_sorter_symmratio(self,f,i):
         if i in [0,1,2,3,4,7]:
             return self.pn_phase_deriv_symmratio[i]
         else:
-            return egrad(self.calculate_pn_phase,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
+            return egrad(utilities.calculate_pn_phase,1)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
     def grad_pn_phase_sorter_delta(self,f,i):
         if i in [0,1,2,3,4,7]:
             return self.pn_phase_deriv_delta[i]
         else:
-            return egrad(self.calculate_pn_phase,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
+            return egrad(utilities.calculate_pn_phase,2)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
     def grad_pn_phase_sorter_chi_a(self,f,i):
         if i in [0,1,2,3,4,7]:
             return self.pn_phase_deriv_chi_a[i]
         else:
-            return egrad(self.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
+            return egrad(utilities.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
     def grad_pn_phase_sorter_chi_s(self,f,i):
         if i in [0,1,2,3,4,7]:
             return self.pn_phase_deriv_chi_s[i]
         else:
-            return egrad(self.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
+            return egrad(utilities.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,f,i)
 
     @primitive
     def assign_param_deltas(self,chirpm,symmratio,massdelta,chi_a,chi_s,fRD,fdamp,f3,i):
