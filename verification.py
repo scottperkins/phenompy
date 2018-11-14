@@ -1,5 +1,6 @@
-import IMRPhenomD_full_mod as imrfull
-import IMRPhenomD_ins_mod as imrins
+# import IMRPhenomD_full_mod as imrfull
+# import IMRPhenomD_ins_mod as imrins
+import Modified_IMRPhenomD as modimr
 import IMRPhenomD as imr
 import numpy as np
 import csv
@@ -13,7 +14,7 @@ ns = [True,False,False]
 detects = ['aLIGO','aLIGOFitted','LISA']
 fishs, invfishs,total = [],[],[]
 for x in np.arange(len(mass1)):
-    model = imrfull.Modified_IMRPhenomD(mass1=mass1[x],mass2=mass2[x],spin1=spin1[x],spin2=spin2[x],
+    model = modimr.Modified_IMRPhenomD_Full_Freq(mass1=mass1[x],mass2=mass2[x],spin1=spin1[x],spin2=spin2[x],
             collision_phase=0,collision_time=0,Luminosity_Distance=dl[x],NSflag=ns[x])
     fish,invfish,cholo = model.calculate_fisher_matrix_vector(detector=detects[x])
     fishs.append(fish)
@@ -40,7 +41,7 @@ print(np.nonzero(total-compfishs))
 ##############################################################################################
 fishs, invfishs,total = [],[],[]
 for x in np.arange(len(mass1)):
-    model = imrins.insModified_IMRPhenomD(mass1=mass1[x],mass2=mass2[x],spin1=spin1[x],spin2=spin2[x],
+    model = modimr.Modified_IMRPhenomD_Inspiral_Freq(mass1=mass1[x],mass2=mass2[x],spin1=spin1[x],spin2=spin2[x],
             collision_phase=0,collision_time=0,Luminosity_Distance=dl[x],NSflag=ns[x])
     fish,invfish,cholo = model.calculate_fisher_matrix_vector(detector=detects[x])
     fishs.append(fish)

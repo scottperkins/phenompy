@@ -1,6 +1,7 @@
 import autograd.numpy as np
 import numpy
 from scipy import integrate
+from scipy.interpolate import CubicSpline
 import autograd.scipy.linalg as spla
 import math
 import csv
@@ -160,6 +161,9 @@ class IMRPhenomD():
         self.alpha1 = self.phase_cont_alpha1(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1)
         self.alpha0 = self.phase_cont_alpha0(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.alpha1)
         self.var_arr = [self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a]
+
+        """Populate array with variables for transformation from d/d(theta) to d/d(log(theta)) - begins with 0 because fisher matrix variables start at 1, not 0"""
+        self.log_factors = [0,self.A0,1,1,self.chirpm,self.symmratio,1,1]
 
     """Calculates the parameters beta0, alpha0, beta1, and alpha1 based on the condition that the phase is continuous
     across the boundary"""
@@ -672,8 +676,7 @@ class IMRPhenomD():
         for i in range(9):
             self.alpha0_deriv.append(grad(self.phase_cont_alpha0,i)(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.alpha1))
 
-        """Populate array with variables for transformation from d/d(theta) to d/d(log(theta)) - begins with 0 because fisher matrix variables start at 1, not 0"""
-        self.log_factors = [0,self.A0,1,1,self.chirpm,self.symmratio,1,1]
+
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j)"""
     def calculate_element_integrand(self,f,i,j):
@@ -793,11 +796,11 @@ class IMRPhenomD():
 
         self.lower_freq =self.calculate_lower_freq(freq,detector=detector)#self.flower
         self.upper_freq =self.calculate_upper_freq(freq,detector=detector)#self.fupper
-        print("lower: {}".format(self.lower_freq),"upper: {}".format(self.upper_freq))
+
         """Pre-populate Derivative arrays for faster evaluation"""
         self.calculate_derivatives()
 
-        variable_indicies = range(1,8)
+        variable_indicies = range(1,len(self.var_arr)+1)
         fisher = np.zeros((len(variable_indicies),len(variable_indicies)))
         relerror = np.zeros((len(variable_indicies),len(variable_indicies)))
 
@@ -807,12 +810,12 @@ class IMRPhenomD():
             for i in variable_indicies:
                 for j in range(1,i+1):
                     if i == j:
-                        el, err = int_func(self.calculate_element_integrand,self.lower_freq,self.upper_freq,args=(i,j),limit=1000,epsabs=1e-50,epsrel=1e-15)
+                        el, err = int_func(self.calculate_element_integrand,self.lower_freq,self.upper_freq,args=(i,j),limit=1000,epsabs=1e-50,epsrel=1e-5)
                         fisher[i-1][j-1] = (1/2)*el
-                        relerror[i-1][j-1] = (1/2)*err/el
+                        #relerror[i-1][j-1] = (1/2)*err/el
                     else:
-                        fisher[i-1][j-1], err = int_func(self.calculate_element_integrand,self.lower_freq,self.upper_freq,args=(i,j),limit=1000,epsabs=1e-50,epsrel=1e-15)
-                        relerror[i-1][j-1] = err/el
+                        fisher[i-1][j-1], err = int_func(self.calculate_element_integrand,self.lower_freq,self.upper_freq,args=(i,j),limit=1000,epsabs=1e-50,epsrel=1e-5)
+                        #relerror[i-1][j-1] = err/el
 
         ##############################################################
         #Discrete methods
@@ -849,6 +852,7 @@ class IMRPhenomD():
 
 
         fisher = fisher + np.transpose(fisher)
+        print(fisher)
         try:
             chol_fisher = np.linalg.cholesky(fisher)
             inv_chol_fisher = np.linalg.inv(chol_fisher)
@@ -1043,6 +1047,7 @@ class IMRPhenomD():
             """Trim Frequencies to seperate which stage to apply (ins,int,mr)"""
             int_freq = np.asarray(freq[flow_pos:fup_pos])
             noise_integrand = self.noise_curve[flow_pos:fup_pos]
+
             amp_freqs = self.split_freqs_amp(int_freq)
             phase_freqs = self.split_freqs_phase(int_freq)
 
@@ -1070,6 +1075,7 @@ class IMRPhenomD():
         self.fisher = fisher
         self.inv_fisher = inv_fisher
         return fisher,inv_fisher,cholo
+
 
 
     """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
@@ -1326,6 +1332,9 @@ class IMRPhenomD():
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1: lambda g: g*self.alpha0_deriv[7],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1: lambda g: g*self.alpha0_deriv[8])
 
+"""Class that corrects IMRPhenomD for SPA approximation"""
+class IMRPhenomD_SPA(IMRPhenomD):
+    def test(): return 0
 
 if __name__ == "__main__":
     """Example code that generates a model with the parameters below, calculates GR Fisher and modified Fisher,
