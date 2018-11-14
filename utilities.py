@@ -3,6 +3,7 @@ import autograd.numpy as np
 """Euler's Number (Not in SciPy or NumPy Constants)"""
 gamma_E = 0.5772156649015328606065120900824024310421
 
+
 """Generic, short, simple functions that can be easily separated from a specific model"""
 ###########################################################################################
 """Calculates the total mass given symmratio and chirp mass"""

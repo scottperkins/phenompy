@@ -753,7 +753,7 @@ class IMRPhenomD():
     int_scheme should be left with simps - orders of magnitude faster than quad, and interpolating the noise data
     makes it debatable whether the accuracy is better than simps
     LOOP VERSION - this is much slower than the vectorized version"""
-    def calculate_fisher_matrix(self,detector,int_scheme = 'simps',stepsize=None):
+    def calculate_fisher_matrix(self,detector,int_scheme = 'simps',stepsize=None,lower_freq=None,upper_freq=None):
         if int_scheme == 'simps':
             int_func = integrate.simps
         elif int_scheme == 'trapz':
@@ -793,9 +793,14 @@ class IMRPhenomD():
         else:
             print('DETECTOR ISSUE - check to make sure the detector name is spelled exactly as in {},{},{},{}'.format(names,'aLIGOAnalytic','aLIGOFitted','DECIGO'))
             return 0,0,0
-
-        self.lower_freq =self.calculate_lower_freq(freq,detector=detector)#self.flower
-        self.upper_freq =self.calculate_upper_freq(freq,detector=detector)#self.fupper
+        if lower_freq == None:
+            self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
+        else:
+            self.lower_freq  = lower_freq
+        if upper_freq == None:
+            self.upper_freq =self.calculate_upper_freq(freq,detector=detector)
+        else:
+            self.upper_freq = upper_freq
 
         """Pre-populate Derivative arrays for faster evaluation"""
         self.calculate_derivatives()
@@ -990,7 +995,7 @@ class IMRPhenomD():
     options aLIGOAnalytic and stepsize are purely for testing. The real data has these set.
     int_scheme should be left with simps - orders of magnitude faster than quad, and interpolating the noise data
     makes it debatable whether the accuracy is better than simps"""
-    def calculate_fisher_matrix_vector(self,detector,int_scheme = 'simps',stepsize=None):
+    def calculate_fisher_matrix_vector(self,detector,int_scheme = 'simps',stepsize=None,lower_freq = None, upper_freq=None):
         start = time()
         if int_scheme == 'simps':
             int_func = integrate.simps
@@ -1002,8 +1007,14 @@ class IMRPhenomD():
 
         self.noise_curve, self.noise_func, freq = self.populate_noise(detector, int_scheme, stepsize)
 
-        self.lower_freq =self.calculate_lower_freq(freq,detector=detector)#self.flower
-        self.upper_freq = self.calculate_upper_freq(freq,detector=detector)#self.fupper
+        if lower_freq == None:
+            self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
+        else:
+            self.lower_freq  = lower_freq
+        if upper_freq == None:
+            self.upper_freq =self.calculate_upper_freq(freq,detector=detector)
+        else:
+            self.upper_freq = upper_freq
 
         ## Almost entire time is spent here ##
         """Pre-populate Derivative arrays for faster evaluation"""
@@ -1080,13 +1091,19 @@ class IMRPhenomD():
 
     """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
     **NOTE** I'm using trimmed frequencies here. Should I be using the full 10000 Hz range?"""
-    def calculate_snr(self,detector='aLIGO'):
+    def calculate_snr(self,detector='aLIGO',lower_freq=None,upper_freq=None):
         self.noise_curve, self.noise_func, freq = self.populate_noise(detector=detector)
         if len(self.noise_curve) == 0:
             return "ERROR in noise_curve population"
-        """For SNR, should the frequency be trimmed or not? Currently, not"""
-        self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
-        self.upper_freq =self.calculate_upper_freq(freq,detector=detector)
+
+        if lower_freq == None:
+            self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
+        else:
+            self.lower_freq  = lower_freq
+        if upper_freq == None:
+            self.upper_freq =self.calculate_upper_freq(freq,detector=detector)
+        else:
+            self.upper_freq = upper_freq
         """Trim frequency and noise curve down to [flower,fupper]"""
         ftemp = freq[0]
         i = 0
@@ -1332,9 +1349,7 @@ class IMRPhenomD():
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1: lambda g: g*self.alpha0_deriv[7],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1: lambda g: g*self.alpha0_deriv[8])
 
-"""Class that corrects IMRPhenomD for SPA approximation"""
-class IMRPhenomD_SPA(IMRPhenomD):
-    def test(): return 0
+
 
 if __name__ == "__main__":
     """Example code that generates a model with the parameters below, calculates GR Fisher and modified Fisher,
