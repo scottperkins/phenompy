@@ -12,7 +12,7 @@ ns = [True,False,False]
 # detects = ['aLIGO','aLIGOFitted','LISA']
 
 detects = ['aLIGO','aLIGO','LISA']
-count = 1
+count = 2
 
 DL = LumDist_SNR(mass1[count], mass2[count],spin1[count],spin2[count],SNR_target=10,detector=detects[count])
 model = imr.IMRPhenomD(mass1=mass1[count],mass2=mass2[count],spin1=spin1[count],spin2=spin2[count],
@@ -62,3 +62,8 @@ for x in np.arange(8):
     # print(np.sqrt(np.diagonal(invfish5))[x])
     # print(np.sqrt(np.diagonal(invfish6))[x])
     print((np.sqrt(np.diagonal(invfish5))[x]-np.sqrt(np.diagonal(invfish6))[x])/(np.sqrt(np.diagonal(invfish5))[x]))
+
+for x in np.arange(7):
+    # print(np.sqrt(np.diagonal(invfish5))[x])
+    # print(np.sqrt(np.diagonal(invfish6))[x])
+    print((np.sqrt(np.diagonal(invfish1))[x]-np.sqrt(np.diagonal(invfish2))[x])/(np.sqrt(np.diagonal(invfish1))[x]))

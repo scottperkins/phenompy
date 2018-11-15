@@ -602,7 +602,7 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         f0 = f_trans0
         pn_phase =[]
         for x in np.arange(len(self.pn_phase)):
-            pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
+            pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f0,x))
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
@@ -617,7 +617,7 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         f0 = f_trans0
         pn_phase =[]
         for x in np.arange(len(self.pn_phase)):
-            pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
+            pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f0,x))
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
