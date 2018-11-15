@@ -5,7 +5,6 @@ from scipy.interpolate import interp1d
 extra arguments: phase_mod (=0), bppe (=-3) -> phi_ins = IMRPhenomD.phi_ins + phase_mod*(pi*chirpm*f)**(bppe/3), etc.
 Calculation of the modification from Will '97 for the last, degeneracy calculations -> specific to massive gravity"""
 class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
-    #Can probably just call super(__init__) then redefine alphas,betas
     def __init__(self, mass1, mass2,spin1,spin2, collision_time,
                     collision_phase,Luminosity_Distance,phase_mod = 0,bppe = -3,
                     cosmo_model = cosmology.Planck15,NSflag = False,N_detectors = 1):
@@ -92,11 +91,8 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
         ins_grad = egrad(self.phi_ins,0)
-        # print(grad(ins_grad,12)(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod)*symmratio/M)
-        # print(grad(lambda mod: symmratio/M*(self.bppe/3)*(chirpm*np.pi)**(self.bppe/3)*mod*(f1)**(self.bppe/3-1))(phase_mod))
         return ((1/M)*ins_grad(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod)*symmratio
             -symmratio/M*(grad(self.phi_int,0)(f1,M,symmratio,0,0,beta2,beta3,chirpm,phase_mod)))
-            # -1/M*(beta2*(1/(f1)) + M*beta3*(M*f1)**(-4)+symmratio*(self.bppe/3)*(chirpm*np.pi)*phase_mod*(chirpm*np.pi*f1)**(self.bppe/3-1)))
 
     def phase_cont_beta0(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1,phase_mod):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -111,8 +107,7 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
         return self.phi_ins(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod)*symmratio \
         - symmratio*self.phi_int(f1,M,symmratio,0,beta1,beta2,beta3,chirpm,phase_mod)
-        # - ( beta1*f1*M + beta2*np.log(M*f1) - \
-            # beta3/3 *(M*f1)**(-3)+symmratio*phase_mod*(chirpm*np.pi*f1)**(self.bppe/3))
+
     def phase_cont_alpha1(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod):
         M = self.assign_totalmass(chirpm,symmratio)
         alpha2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,15)
@@ -124,8 +119,6 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         f2 = fRD*0.5
         return (1/M)*egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod)*symmratio \
         -(symmratio/M)*egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod)
-        #- (alpha2*(1/(M*f2)**2) + \
-        #alpha3*(M*f2)**(-1/4) + alpha4*(1/(fdamp+(f2-alpha5*fRD)**2/(fdamp)))/M +(self.bppe/3)*(chirpm*np.pi)*phase_mod*(chirpm*np.pi*f2)**(self.bppe/3-1))
 
     def phase_cont_alpha0(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -445,17 +438,6 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         return ampout,phaseout, np.multiply(ampout,np.cos(phaseout))
 
 
-    # """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - need phase mod arg"""
-    # def calculate_element_integrand(self,f,i,j):
-    #     elem1 = self.log_factors[i]*self.calculate_waveform_derivative_vector()
-    #     elem1 = self.log_factors[i]*(grad(self.full_amp,i)(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a,self.phasemod)-\
-    #         self.full_amp(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)* grad(self.full_phi,i)(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)*1j)
-    #     elem2 = self.log_factors[j]*(grad(self.full_amp,j)(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)-\
-    #         self.full_amp(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)* grad(self.full_phi,j)(f,self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a)*1j)
-    #     prod = (elem1*np.conj(elem2)).real
-    #     return 4*prod/self.noise_func(f)**2
-
-
     """Derivative Definitions - added phase_mod to derivatives"""
     @primitive
     def assign_beta1(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,phase_mod):
@@ -521,197 +503,6 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[7],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[8],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[9])
-
-
-    ####################################################################################################
-    """Functions specific to constraining th graviton mass in screened gravity - see arXiv:1811.02533"""
-
-    ####################################################################################################
-
-    """Function for plotting degeneracy of Delta Beta, which depends on both the wavelength
-    of the graviton and the screening radius
-    Delta beta = pi^2 *self.chirpm*D/((1+Z)*lambda^2)
-    - D depends on the screening radius (D proportional to the integral_r1^r2 a dt)
-    returns D as a function of lambda
-
-    Second method returns lambda_g as a function of screening radius -
-    Assumptions: the mass of the two galaxies are approximately equal
-    arguments: delta_beta, Rvs - List of Vainshtein radii (cannot be larger than DL/2)"""
-
-    def degeneracy_function_D(self, delta_beta, lambda_g ):
-        return delta_beta* lambda_g**2 *(1+ self.Z)/(np.pi**2 *self.chirpm)
-    def degeneracy_function_lambda(self,delta_beta, Rvs):
-        lambdas = []
-        H0=self.cosmo_model.H0.to('Hz').value#self.cosmo_model.H(0).u()
-        Z1 = Zfunc(Rvs/mpc)
-        Z2 = Zfunc((self.DL-Rvs)/mpc)
-        D = (1+self.Z)*(Dfunc(Z2)*mpc- Dfunc(Z1)*mpc)
-        return (D*np.pi**2*self.chirpm/((1+self.Z)*delta_beta))**(1/2)
-
-
-    """Add the Mass unit axis to plot"""
-    def convert_wavelength_mass(self, wavelength):
-        return hplanck * c / (wavelength )
-    def convert_lambda_mass_axis(self, ax):
-        l1, l2 = ax.get_ylim()
-        self.ax_ev.set_ylim(self.convert_wavelength_mass(l1),self.convert_wavelength_mass(l2))
-        self.ax_ev.figure.canvas.draw()
-
-    """Plot the constraint on Beta from the TOA difference of the peak GW signal and peak gamma ray detection
-    measured for GW170817 -
-    arguments: screening radius array (seconds)"""
-    def degeneracy_function_lambda_GW170817(self,Rvs):
-        lambdas = []
-        H0=self.cosmo_model.H0.to('Hz').value#self.cosmo_model.H(0).u()
-        DL_GW170817 = 40*mpc
-        Delta_T_measured = 1.7 #seconds
-        fpeak_measured =3300 #3300#REF 1805.11579
-
-        Z = Distance(DL_GW170817/mpc,unit=u.Mpc).compute_z(cosmology = self.cosmo_model)
-
-        Z1 = Zfunc(Rvs/mpc)
-        Z2 = Zfunc((DL_GW170817-Rvs)/mpc)
-        D = (1+Z)*(Dfunc(Z2)*mpc - Dfunc(Z1)*mpc)
-        return (2*Delta_T_measured*fpeak_measured**2/((1+Z)*D))**(-1/2)
-
-
-    """Results of Fisher analysis on GW150914 -  Refs 1602.03840, PhysRevLett.116.221101"""
-    def degeneracy_function_lambda_GW150914(self,Rvs):
-        lambdas = []
-        H0=self.cosmo_model.H0.to('Hz').value#self.cosmo_model.H(0).u()
-        GW15DL = 420*mpc # MPC
-        GW15chirpm = 30.4 *s_solm#Solar Masses
-        GW15Z = .088
-        GW15lambdag = 1e16/c # seconds
-        GW15D = (1+GW15Z)*(integrate.quad(lambda x: 1/(H0*(1+x)**2*np.sqrt(.3*(1+x)**3 + .7)),0,GW15Z )[0])
-
-        GW15DeltaBeta = (GW15D*np.pi**2*GW15chirpm)/((1+GW15Z)*GW15lambdag**2)
-        print("GW15LIGO (90): {}".format(GW15DeltaBeta))
-
-        Z1 = Zfunc(Rvs/mpc)
-        Z2 = Zfunc((GW15DL-Rvs)/mpc)
-        D = (1+GW15Z)*(Dfunc(Z2)*mpc - Dfunc(Z1)*mpc)
-        return (D*np.pi**2*GW15chirpm/((1+GW15Z)*GW15DeltaBeta))**(1/2)
-
-
-    """Returns figure object that is the shaded plot of allowable graviton wavelengths vs vainshtein radius
-    -args:
-        delta_beta -> if empty, trys to use a previously calculated fisher and returns exception if no
-    fisher exists - it will accept any delta_beta as an argument
-        comparison -> boolean for comparing the model in question to previous GW detections \el [GW150914,GW151226,GW170104,GW170814,GW170817,GW170608]
-    plots 5000 points from r_V \el [0.0001 DL/2,DL/2]
-    - Compares constructed model with the models """
-    def create_degeneracy_plot(self,delta_beta = None,comparison = True):
-        colors = ['r','g','b','c','m','y','k','w']
-        alpha_param = .2
-        fig,ax = plt.subplots(nrows=1,ncols=1)
-        self.ax_ev = ax.twinx()
-        ax.callbacks.connect("ylim_changed",self.convert_lambda_mass_axis)
-
-        if delta_beta == None:
-            try:
-                DB = np.sqrt(np.diagonal(self.inv_fisher))[-1]
-            except:
-                print("Issue with fisher - please calculate fisher before calling this function")
-                return 0
-        else:
-            DB = delta_beta
-
-        points = 5000
-        print("DB: {}".format(DB))
-        x,y = self.create_degeneracy_data(delta_beta=DB, points= points)
-        lower = np.zeros(len(x))
-        ax.fill_between(np.divide(x,mpc),np.multiply(y,c),lower,alpha = alpha_param+.2,color= colors[0],label="Model - Disallowed Region")
-
-        if comparison:
-            """Bounds from GW170817 - Propagation speed"""
-            try:
-                with open(IMRPD_tables_dir+'/GW170817_prop_speed.csv','r') as f:
-                    reader = csv.reader(f, delimiter=',')
-                    x = []
-                    y =[]
-                    for row in reader:
-                        x.append(float(row[0]))
-                        y.append(float(row[1]))
-            except:
-                print('No stored data for {}, writing data to file'.format('GW170817 - Propagation speed'))
-                DL_GW170817 = 40*mpc
-                x = np.linspace(10e-5*DL_GW170817/2,.9999999*DL_GW170817/2,points)
-                y = self.degeneracy_function_lambda_GW170817(x)
-                with open(IMRPD_tables_dir+'/GW170817_prop_speed.csv','w') as f:
-                    writer = csv.writer(f,delimiter=',')
-                    output = [[x[i],y[i]] for i in np.arange(len(x))]
-                    for i in output:
-                        writer.writerow(list(i))
-            lower = np.zeros(len(x))
-            ax.fill_between(np.divide(x,mpc),np.multiply(y,c),lower,alpha = alpha_param,color= 'blue')#colors[1],label="Disallowed Region - GW170817 Bound - Speed Constraint")
-
-            """Bounds from GW150914 - Bayesian 90%"""
-            try:
-                with open(IMRPD_tables_dir+'/GW150914_bayes_90.csv','r') as f:
-                    reader = csv.reader(f, delimiter=',')
-                    x = []
-                    y =[]
-                    for row in reader:
-                        x.append(float(row[0]))
-                        y.append(float(row[1]))
-            except:
-                print('No stored data for {}, writing data to file'.format('GW150914 - Bayesian 90%'))
-                GW150914DL = 410*mpc
-                x = np.linspace(10e-5*GW150914DL/2,.9999999*GW150914DL/2,points)
-                y = self.degeneracy_function_lambda_GW150914(x)
-                with open(IMRPD_tables_dir+'/GW150914_bayes_90.csv','w') as f:
-                    writer = csv.writer(f,delimiter=',')
-                    output = [[x[i],y[i]] for i in np.arange(len(x))]
-                    for i in output:
-                        writer.writerow(list(i))
-            lower = np.zeros(len(x))
-            ax.fill_between(np.divide(x,mpc),np.multiply(y,c),lower,alpha=alpha_param, color='grey')#colors[2],label = "Disallowed Region - GW150914 Bound - Bayesian 90% confidence")
-
-            """The rest of the bounds will be calculated and tabulated separately, then read in.
-            If plots do not show up, just run the population script in ./Data_Tables"""
-            names = ['GW150914','GW151226','GW170104','GW170814','GW170817','GW170608']
-            i= 3
-            for name in names:
-                try:
-                    with open(IMRPD_tables_dir+'/'+name+'_fisher_deg.csv','r') as f:
-                        reader = csv.reader(f, delimiter=',')
-                        x =[]
-                        y =[]
-                        for row in reader:
-                            x.append(float(row[0]))
-                            y.append(float(row[1]))
-                    lower = np.zeros(len(x))
-                    ax.fill_between(np.divide(x,mpc),np.multiply(y,c),lower,alpha = alpha_param,color= 'grey')#np.random.rand(3,),label="Disallowed Region - {} Bound - 1-sigma Fisher Constraint".format(name))
-                    i+=i
-                except:
-                    print("Data table for {} not populated. Rerun observational_models_data_generation.py".format(name))
-
-        ax.set_ylabel(r'Bound on $\lambda_g$ (meters)')
-        ax.set_xlabel(r'Bound on Vainshtein Radius (Mpc)')
-        ax.set_title(r'Degeneracy of $\Delta \beta$')
-        ax.text(.7,.9,s='Detector: {} \n Masses: {},{} \n Spin: {},{} \n LumDist: {}'.format('aLIGO',self.m1/s_solm,self.m2/s_solm,self.chi1,self.chi2,self.DL/mpc),horizontalalignment='center',verticalalignment='center',transform=ax.transAxes)
-        self.ax_ev.set_ylabel('Mass (eV)')
-        self.ax_ev.grid(False)
-        ax.set_yscale('log')
-        self.ax_ev.set_yscale('log')
-        ax.legend()
-        return fig
-
-    """Helper function to populate the data for plotting
-    Returns: array of Rv, and array of lambda values"""
-    def create_degeneracy_data(self,delta_beta = None,points = 5000):
-        if delta_beta == None:
-            try:
-                DB = np.sqrt(np.diagonal(self.inv_fisher))[-1]
-            except:
-                print("Issue with fisher - please calculate fisher before calling this function")
-                return 0
-        else:
-            DB = delta_beta
-        x = np.linspace(10e-5*self.DL/2,.9999999*self.DL/2,points)
-        y = self.degeneracy_function_lambda(DB,x)
-        return x,y
 
 
 """Child class of Modified_IMRPhenomD - adds modification to the phase of the waveform in the inspiral region -
@@ -808,7 +599,7 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
 
     def phase_cont_beta1(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,f_trans0):
         M = self.assign_totalmass(chirpm,symmratio)
-        f1 = f_trans0
+        f0 = f_trans0
         pn_phase =[]
         for x in np.arange(len(self.pn_phase)):
             pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
@@ -818,12 +609,12 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
         ins_grad = egrad(self.phi_ins,0)
-        return ((1/M)*ins_grad(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio
-            -symmratio/M*(grad(self.phi_int,0)(f1,M,symmratio,0,0,beta2,beta3)))
+        return ((1/M)*ins_grad(f0,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio
+            -symmratio/M*(grad(self.phi_int,0)(f0,M,symmratio,0,0,beta2,beta3)))
 
     def phase_cont_beta0(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1,f_trans0):
         M = self.assign_totalmass(chirpm,symmratio)
-        f1 = f_trans0
+        f0 = f_trans0
         pn_phase =[]
         for x in np.arange(len(self.pn_phase)):
             pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
@@ -832,8 +623,8 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
-        return self.phi_ins(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio \
-        - symmratio*self.phi_int(f1,M,symmratio,0,beta1,beta2,beta3)
+        return self.phi_ins(f0,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio \
+        - symmratio*self.phi_int(f0,M,symmratio,0,beta1,beta2,beta3)
 
     def phase_cont_alpha1(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_trans1):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -843,9 +634,9 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         alpha5 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,18)
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
-        f2 = f_trans1
-        return (1/M)*egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3)*symmratio \
-        -(symmratio/M)*egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
+        f1 = f_trans1
+        return (1/M)*egrad(self.phi_int,0)(f1,M,symmratio,beta0,beta1,beta2,beta3)*symmratio \
+        -(symmratio/M)*egrad(self.phi_mr,0)(f1,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
 
     def phase_cont_alpha0(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_trans1):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -855,9 +646,9 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         alpha5 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,18)
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
-        f2 = f_trans1
-        return self.phi_int(f2,M,symmratio,beta0,beta1,beta2,beta3) *symmratio \
-        - symmratio*self.phi_mr(f2,chirpm,symmratio,0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
+        f1 = f_trans1
+        return self.phi_int(f1,M,symmratio,beta0,beta1,beta2,beta3) *symmratio \
+        - symmratio*self.phi_mr(f1,chirpm,symmratio,0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
 
     ######################################################################################
     """Added phase mod argument for derivatives - returns the same as GR"""
@@ -1219,8 +1010,6 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[9])
 
 
-
-
 """Class that corrects IMRPhenomD for SPA approximation - see arXiv:gr-qc/9901076 - should be the source frame chirpmass??? Actually, the combination of chirpmass is invariant,
 so no worries"""
 class IMRPhenomD_Full_Freq_SPA(IMRPhenomD):
@@ -1306,10 +1095,10 @@ class IMRPhenomD_Inspiral_Freq_SPA(IMRPhenomD_Full_Freq_SPA):
 
 
 """Class that includes ppE parameter in phase for Fisher analysis in entire frequency range- adjusted for correction to SPA, following
-the derivation in arXiv:gr-qc/9901076 - includes ppE correction and GR correction term"""
+the derivation in arXiv:gr-qc/9901076 - includes ppE correction and GR correction term, see nb for the mod SPA coefficients"""
 class Modified_IMRPhenomD_Full_Freq_SPA(Modified_IMRPhenomD_Full_Freq):
     def SPA_correction(self,f,chirpm,b,phase_mod):
-        return 92/45 * (np.pi * chirpm * f)**(5/3)+ (1) * phase_mod * (np.pi * chirpm* f)**(b/3)
+        return 92/45 * (np.pi * chirpm * f)**(5/3)+ (160/1125)*(1431 + 676*b + 134*b**2 + 9*b**3) * phase_mod * (np.pi * chirpm* f)**((10+b)/3)
     """Just need to add terms to the phase functions - call super method, and append correction term"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)
@@ -1322,7 +1111,7 @@ class Modified_IMRPhenomD_Full_Freq_SPA(Modified_IMRPhenomD_Full_Freq):
 the derivation in arXiv:gr-qc/9901076 - includes ppE correction and GR correction term"""
 class Modified_IMRPhenomD_Inspiral_Freq_SPA(Modified_IMRPhenomD_Inspiral_Freq):
     def SPA_correction(self,f,chirpm,b,phase_mod):
-        return 92/45 * (np.pi * chirpm * f)**(5/3)+ (1) * phase_mod * (np.pi * chirpm* f)**(b/3)
+        return 92/45 * (np.pi * chirpm * f)**(5/3)+ (160/1125)*(1431 + 676*b + 134*b**2 + 9*b**3) * phase_mod * (np.pi * chirpm* f)**((10+b)/3)
     """Just need to add terms to the phase functions - call super method, and append correction term"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)

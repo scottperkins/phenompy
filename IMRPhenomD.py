@@ -62,26 +62,6 @@ with open(IMRPD_tables_dir+'/IMRPhenomDParameters_APS.csv','r') as f:
             rowconvert.append(float(eval(x)))
         Lambda[i] = rowconvert
         i += 1
-
-"""For Data imported below, see the script ./Data_Tables/tabulate_data.py for production of values and accuracy testing"""
-"""Read in tabulated data for the luminosity distance to Z conversion - tabulated and interpolated for speed"""
-LumDZ = [[],[]]
-with open(IMRPD_tables_dir+'/tabulated_LumD_Z.csv', 'r') as f:
-    reader = csv.reader(f,delimiter=',')
-    for row in reader:
-        LumDZ[0].append(float(row[0]))
-        LumDZ[1].append(float(row[1]))
-Zfunc = interp1d(LumDZ[0],LumDZ[1])
-
-"""Read in the tabulated data for the integral in the cosmological distance defined in Will '97
- - Tabulated and interpolated for speed"""
-ZD = [[],[]]
-with open(IMRPD_tables_dir+'/tabulated_Z_D.csv','r') as f:
-    reader = csv.reader(f,delimiter=',')
-    for row in reader:
-        ZD[0].append(float(row[0]))
-        ZD[1].append(float(row[1]))
-Dfunc = interp1d(ZD[0],ZD[1])
 ###########################################################################################
 
 
