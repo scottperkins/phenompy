@@ -1,4 +1,5 @@
 import autograd.numpy as np
+from numba import vectorize, cuda
 
 """Euler's Number (Not in SciPy or NumPy Constants)"""
 gamma_E = 0.5772156649015328606065120900824024310421

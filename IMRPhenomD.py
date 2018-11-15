@@ -18,6 +18,7 @@ from astropy.coordinates import Distance
 from astropy import units as u
 import astropy.constants as consts
 from scipy.interpolate import interp1d
+from numba import vectorize, cuda
 
 from noise_utilities import *
 import utilities
