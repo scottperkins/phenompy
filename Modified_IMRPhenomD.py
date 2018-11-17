@@ -1,5 +1,36 @@
-from IMRPhenomD import *
+from PhenomPy.IMRPhenomD import IMRPhenomD
+from PhenomPy.IMRPhenomD import Lambda
+import autograd.numpy as np
+import numpy
+from scipy import integrate
+from scipy.interpolate import CubicSpline,interp1d
+import autograd.scipy.linalg as spla
+import math
+import csv
+import os
+import matplotlib.pyplot as plt
+import multiprocessing as mp
+from autograd import grad
+from time import time
+from functools import partial
+from autograd.extend import primitive, defvjp
+from autograd import elementwise_grad as egrad
+import astropy.cosmology as cosmology
+from astropy.coordinates import Distance
+from astropy import units as u
+import astropy.constants as consts
 from scipy.interpolate import interp1d
+from numba import vectorize, cuda
+
+from PhenomPy import utilities
+from PhenomPy.noise_utilities import *
+
+
+c = utilities.c
+G = utilities.G
+s_solm = utilities.s_solm
+mpc = utilities.mpc
+
 #Rewrite to accept array of parameters - then won't have to copy and paste for child classes
 """Child class of IMRPhenomD - adds ppE modification to the phase of the waveform in the entire frequency range-
 extra arguments: phase_mod (=0), bppe (=-3) -> phi_ins = IMRPhenomD.phi_ins + phase_mod*(pi*chirpm*f)**(bppe/3), etc.
