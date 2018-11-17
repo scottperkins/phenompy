@@ -6,6 +6,7 @@ import autograd.scipy.linalg as spla
 import math
 import csv
 import os
+print(os.getcwd())
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 from autograd import grad
@@ -19,10 +20,9 @@ from astropy import units as u
 import astropy.constants as consts
 from scipy.interpolate import interp1d
 from numba import vectorize, cuda
-
-from noise_utilities import *
 import utilities
-print("YOU JUST IMPORTED THE NEW IMRPHENOMD !!!!")
+from noise_utilities import *
+
 
 """NOTE: the values are commented out below to match the previous code
 - should be uncommented before publication"""
@@ -38,7 +38,6 @@ hplanck = consts.h.to('eV s').value #Planck Constant in eV s
 # mpc = 3085677581*10**(13)/c #consts.kpc.to('m')*1000/c#Mpc in sec
 # H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
 # hplanck = 4.135667662e-15 #ev s
-
 
 """Path variables"""
 IMRPD_dir = os.path.dirname(os.path.realpath(__file__))
@@ -83,6 +82,7 @@ class IMRPhenomD():
       and N_detectors is the number of detectors that observed the event
       - all should be in units of [s] or [1/s] - use constants defined above for conversion
       - all parameters are in the SOURCE frame"""
+
     def __init__(self, mass1, mass2,spin1,spin2, collision_time, \
                     collision_phase,Luminosity_Distance,cosmo_model = cosmology.Planck15,NSflag = False,N_detectors=1):
         """Populate model variables"""
