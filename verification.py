@@ -2,8 +2,8 @@
 # import IMRPhenomD_ins_mod as imrins
 # import Modified_IMRPhenomD as modimr
 # import IMRPhenomD as imr
-from PhenomPy.IMRPhenomD import IMRPhenomD
-from PhenomPy.Modified_IMRPhenomD import Modified_IMRPhenomD_Full_Freq, Modified_IMRPhenomD_Inspiral_Freq
+from phenompy.gr import IMRPhenomD
+from phenompy.modified_gr import Modified_IMRPhenomD_Full_Freq, Modified_IMRPhenomD_Inspiral_Freq
 from utilities import s_solm, c, mpc
 import numpy as np
 import csv

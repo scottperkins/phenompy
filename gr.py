@@ -20,8 +20,8 @@ import astropy.constants as consts
 from scipy.interpolate import interp1d
 from numba import vectorize, cuda
 
-from PhenomPy import utilities
-from PhenomPy.noise_utilities import *
+from phenompy import utilities
+from phenompy.noise_utilities import *
 
 
 # """NOTE: the values are commented out below to match the previous code
@@ -1334,6 +1334,89 @@ class IMRPhenomD():
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1: lambda g: g*self.alpha0_deriv[7],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1: lambda g: g*self.alpha0_deriv[8])
 
+
+"""Class that corrects IMRPhenomD for SPA approximation - see arXiv:gr-qc/9901076 - should be the source frame chirpmass??? Actually, the combination of chirpmass is invariant,
+so no worries"""
+class IMRPhenomD_Full_Freq_SPA(IMRPhenomD):
+    """Function for correction term"""
+    def SPA_correction(self,f,chirpm):
+        return 92/45 * (np.pi * chirpm * f)**(5/3)
+    """Just need to add terms to the phase functions - call super method, and append correction term"""
+    def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase):
+        return (super(IMRPhenomD_Full_Freq_SPA,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)+ self.SPA_correction(f,chirpm) )
+    def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm):
+        return (super(IMRPhenomD_Full_Freq_SPA,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3))+ self.SPA_correction(f,chirpm)
+    def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp):
+        return (super(IMRPhenomD_Full_Freq_SPA,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))+ self.SPA_correction(f,chirpm)
+    """Added chirp mass arg to beta parameter calls"""
+    def phase_int_vector(self,f,A0,phic,tc,chirpm,symmratio,chi_s,chi_a):
+        M = self.assign_totalmass(chirpm,symmratio)
+        m1 = self.assign_mass1(chirpm,symmratio)
+        m2 = self.assign_mass2(chirpm,symmratio)
+        delta = self.assign_delta(symmratio)
+        fRD = self.assign_fRD(m1,m2,M,symmratio,chi_s,chi_a)
+        beta1 = self.assign_beta1(chirpm,symmratio,delta,phic,tc,chi_a,chi_s)
+        beta0 = self.assign_beta0(chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1)
+        beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
+        beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
+        return self.phi_int(f,M,symmratio,beta0,beta1,beta2,beta3,chirpm)
+    def phase_cont_beta1(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s):
+        M = self.assign_totalmass(chirpm,symmratio)
+        f1 = 0.018/M
+        pn_phase =[]
+        for x in np.arange(len(self.pn_phase)):
+            pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
+        beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
+        beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
+        sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
+        sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
+        sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
+        ins_grad = egrad(self.phi_ins,0)
+        return ((1/M)*ins_grad(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio
+            -symmratio/M*(grad(self.phi_int,0)(f1,M,symmratio,0,0,beta2,beta3,chirpm)))
+
+    def phase_cont_beta0(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1):
+        M = self.assign_totalmass(chirpm,symmratio)
+        f1 = 0.018/M
+        pn_phase =[]
+        for x in np.arange(len(self.pn_phase)):
+            pn_phase.append(self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f1,x))
+        beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
+        beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
+        sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
+        sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
+        sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
+        return self.phi_ins(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio \
+        - symmratio*self.phi_int(f1,M,symmratio,0,beta1,beta2,beta3,chirpm)
+
+    def phase_cont_alpha1(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1):
+        M = self.assign_totalmass(chirpm,symmratio)
+        alpha2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,15)
+        alpha3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,16)
+        alpha4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,17)
+        alpha5 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,18)
+        beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
+        beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
+        f2 = fRD*0.5
+        return ((1/M)*egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm)*symmratio -
+            symmratio/M * egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))
+    def phase_cont_alpha0(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1):
+        M = self.assign_totalmass(chirpm,symmratio)
+        alpha2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,15)
+        alpha3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,16)
+        alpha4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,17)
+        alpha5 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,18)
+        beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
+        beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
+        f2 = fRD*0.5
+        return (self.phi_int(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm) *symmratio -
+            symmratio*self.phi_mr(f2,chirpm,symmratio,0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))
+
+class IMRPhenomD_Inspiral_Freq_SPA(IMRPhenomD_Full_Freq_SPA):
+    def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm):
+        return (super(IMRPhenomD_Full_Freq_SPA,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3))
+    def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp):
+        return (super(IMRPhenomD_Full_Freq_SPA,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))
 
 
 if __name__ == "__main__":
