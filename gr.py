@@ -39,7 +39,7 @@ IMRPD_tables_dir = IMRPD_dir + '/Data_Tables'
 Array is Lambda[i][j] - i element of {rho_n,v2,gamma_n,sigma_n,beta_n,alpha_n}
 and j element of lambda{00,10,01,11,21,02,12,22,03,13,23}"""
 Lambda = np.zeros((19,11))
-with io.open(IMRPD_tables_dir+'/IMRPhenomDParameters_APS.csv','r') as f:
+with io.open(IMRPD_tables_dir+'/IMRPhenomDParameters_APS.csv','r',encoding='utf-8') as f:
     reader = csv.reader(f)
     i = -1
     for row in reader:
