@@ -13,13 +13,13 @@ IMRPD_tables_dir = IMRPD_dir + '/Data_Tables'
 noise = []
 for i in range(11):
     noise.append([])
-with open(IMRPD_tables_dir+'/curves.csv', 'r') as file:
+with open(IMRPD_tables_dir+'/curves.csv', 'r',encoding='utf-8') as file:
     reader = csv.reader(file)
     for row in reader:
         for i in np.arange(len(row)):
             noise[i].append(float(row[i]))
 noise_lisa = [[],[],[]]
-with open(IMRPD_tables_dir+'/NewLISATable.dat','r') as file:
+with open(IMRPD_tables_dir+'/NewLISATable.dat','r',encoding='utf-8') as file:
     reader = csv.reader(file,delimiter="\t")
     for line in reader:
         noise_lisa[0].append(float(line[0]))
