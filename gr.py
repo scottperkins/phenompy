@@ -20,8 +20,7 @@ import astropy.constants as consts
 from scipy.interpolate import interp1d
 
 from phenompy import utilities
-from phenompy.noise_utilities import *
-
+from phenompy import noise_utilities
 
 # """NOTE: the values are commented out below to match the previous code
 # - should be uncommented before publication"""
@@ -745,38 +744,40 @@ class IMRPhenomD():
         else:
             int_func = integrate.quad
 
-        names = [ 'aLIGO', 'A+', 'A++', 'Vrt', 'Voyager', 'CE1', 'CE2 wide', 'CE2 narrow', 'ET-B', 'ET-D']
-        freq = noise[0]
-        if detector in names:
-            self.noise_curve = noise[names.index(detector)+1]
-            if int_scheme == 'quad':
-                self.noise_func = CubicSpline(noise[0],self.noise_curve)
-        elif detector == 'LISA':
-            self.noise_curve = noise_lisa[1]
-            freq = noise_lisa[0]
-            if int_scheme == 'quad':
-                self.noise_func = CubicSpline(noise_lisa[0],self.noise_curve)
-        elif detector == 'aLIGOAnalytic':
-            """Purely for testing"""
-            if stepsize != None:
-                freq = np.arange(1,10000,stepsize)
-            self.noise_curve = sym_noise_curve(np.asarray(freq))
-            self.noise_func = sym_noise_curve
-        elif detector == 'aLIGOFitted':
-            if stepsize != None:
-                freq = np.arange(1,10000,stepsize)
-            self.noise_curve = fitted_hanford_noise(np.asarray(freq))
-            self.noise_func = fitted_hanford_noise
-        elif detector == 'DECIGO':
-            if stepsize != None:
-                freq = np.arange(1e-3,100,stepsize)
-            else:
-                freq = np.arange(1e-3,100,.1)
-            self.noise_curve = decigo_noise(np.asarray(freq))
-            self.noise_func = decigo_noise
-        else:
-            print('DETECTOR ISSUE - check to make sure the detector name is spelled exactly as in {},{},{},{}'.format(names,'aLIGOAnalytic','aLIGOFitted','DECIGO'))
-            return 0,0,0
+        # names = [ 'aLIGO', 'A+', 'A++', 'Vrt', 'Voyager', 'CE1', 'CE2 wide', 'CE2 narrow', 'ET-B', 'ET-D']
+        # freq = noise[0]
+        # if detector in names:
+        #     self.noise_curve = noise[names.index(detector)+1]
+        #     if int_scheme == 'quad':
+        #         self.noise_func = CubicSpline(noise[0],self.noise_curve)
+        # elif detector == 'LISA':
+        #     self.noise_curve = noise_lisa[1]
+        #     freq = noise_lisa[0]
+        #     if int_scheme == 'quad':
+        #         self.noise_func = CubicSpline(noise_lisa[0],self.noise_curve)
+        # elif detector == 'aLIGOAnalytic':
+        #     """Purely for testing"""
+        #     if stepsize != None:
+        #         freq = np.arange(1,10000,stepsize)
+        #     self.noise_curve = sym_noise_curve(np.asarray(freq))
+        #     self.noise_func = sym_noise_curve
+        # elif detector == 'aLIGOFitted':
+        #     if stepsize != None:
+        #         freq = np.arange(1,10000,stepsize)
+        #     self.noise_curve = fitted_hanford_noise(np.asarray(freq))
+        #     self.noise_func = fitted_hanford_noise
+        # elif detector == 'DECIGO':
+        #     if stepsize != None:
+        #         freq = np.arange(1e-3,100,stepsize)
+        #     else:
+        #         freq = np.arange(1e-3,100,.1)
+        #     self.noise_curve = decigo_noise(np.asarray(freq))
+        #     self.noise_func = decigo_noise
+        # else:
+        #     print('DETECTOR ISSUE - check to make sure the detector name is spelled exactly as in {},{},{},{}'.format(names,'aLIGOAnalytic','aLIGOFitted','DECIGO'))
+        #     return 0,0,0
+        self.noise_curve, self.noise_func, freq = self.populate_noise(detector, int_scheme, stepsize)
+
         if lower_freq == None:
             self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
         else:
@@ -942,31 +943,36 @@ class IMRPhenomD():
 
     def populate_noise(self, detector='aLIGO',int_scheme='simps',stepsize = None):
         names = [ 'aLIGO', 'A+', 'A++', 'Vrt', 'Voyager', 'CE1', 'CE2 wide', 'CE2 narrow', 'ET-B', 'ET-D']
-        freq = noise[0]
+        freq = noise_utilities.noise[0]
         if detector in names:
-            noise_curve = noise[names.index(detector)+1]
+            noise_curve = noise_utilities.noise[names.index(detector)+1]
             if int_scheme == 'quad':
-                noise_func = CubicSpline(noise[0],noise_curve)
+                noise_func = CubicSpline(noise_utilities.noise[0],noise_curve)
             else:
                 noise_func = None
         elif detector == 'LISA':
-            noise_curve = noise_lisa[1]
-            freq = noise_lisa[0]
+            noise_curve = noise_utilities.noise_lisa[1]
+            freq = noise_utilities.noise_lisa[0]
             if int_scheme == 'quad':
-                noise_func = CubicSpline(noise_lisa[0],noise_curve)
+                noise_func = CubicSpline(noise_utilities.noise_lisa[0],noise_curve)
             else:
                 noise_func = None
         elif detector == 'aLIGOAnalytic':
             """Purely for testing"""
             if stepsize != None:
                 freq = np.arange(1,10000,stepsize)
-            noise_curve = sym_noise_curve(np.asarray(freq))
-            noise_func = sym_noise_curve
+            noise_curve = noise_utilities.sym_noise_curve(np.asarray(freq))
+            noise_func = noise_utilities.sym_noise_curve
         elif detector == 'aLIGOFitted':
             if stepsize != None:
                 freq = np.arange(1,10000,stepsize)
-            noise_curve = fitted_hanford_noise(np.asarray(freq))
-            noise_func = fitted_hanford_noise
+            noise_curve = noise_utilities.fitted_hanford_noise(np.asarray(freq))
+            noise_func = noise_utilities.fitted_hanford_noise
+        elif detector == 'DECIGO':
+            if stepsize != None:
+                freq = np.arange(1,10000,stepsize)
+            noise_curve = noise_utilities.decigo_noise(np.asarray(freq))
+            noise_func = noise_utilities.decigo_noise
 
         else:
             print('DETECTOR ISSUE - check to make sure the detector name is spelled exactly as in {},{},{}'.format(names,'aLIGOAnalytic','aLIGOFitted'))
@@ -987,7 +993,6 @@ class IMRPhenomD():
             int_func = integrate.trapz
         else:
             int_func= integrate.quad
-        freq = noise[0]
 
         self.noise_curve, self.noise_func, freq = self.populate_noise(detector, int_scheme, stepsize)
 
