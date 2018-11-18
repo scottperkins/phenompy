@@ -1,5 +1,4 @@
 import autograd.numpy as np
-from numba import vectorize, cuda
 import astropy.constants as consts
 import astropy.cosmology as cosmology
 from astropy.coordinates import Distance
