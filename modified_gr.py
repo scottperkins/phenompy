@@ -965,15 +965,15 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
                 return np.ones(len(j))*self.alpha1
         return self.alpha1
     defvjp(assign_alpha1,None,
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[0],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[1],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[2],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[3],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[4],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[5],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[6],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[7],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,phase_mod: lambda g: g*self.alpha1_deriv[8])
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[0],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[1],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[2],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[3],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[4],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[5],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[6],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[7],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,f_transition: lambda g: g*self.alpha1_deriv[8])
     @primitive
     def assign_alpha0(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition):
         for j in [chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition]:
@@ -981,16 +981,16 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
                 return np.ones(len(j))*self.alpha0
         return self.alpha0
     defvjp(assign_alpha0,None,
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[0],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[1],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[2],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[3],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[4],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[5],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[6],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[7],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[8],
-                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[9])
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[0],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[1],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[2],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[3],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[4],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[5],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[6],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[7],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[8],
+                lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition: lambda g: g*self.alpha0_deriv[9])
 
 
 
