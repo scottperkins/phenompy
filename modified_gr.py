@@ -630,17 +630,18 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         """Only modifications to the system variables are below:
         -beta1
         -beta0
-        -phase_mod
+        -f_transition
         -bppe
         -var_arr"""
         #################################################################################
-        """Phase continuity parameters"""
-        """Must be done in order - beta1,beta0,alpha1, then alpha0"""
         self.f_trans0 = 0.018/self.M
         if f_int_mr == None:
             self.f_transition = .5*self.fRD
         else:
             self.f_transition = f_int_mr
+
+        """Phase continuity parameters"""
+        """Must be done in order - beta1,beta0,alpha1, then alpha0"""
 
         self.beta1 = self.phase_cont_beta1(self.chirpm,self.symmratio,self.delta,self.phic,self.tc,self.chi_a,self.chi_s)
         self.beta0 = self.phase_cont_beta0(self.chirpm,self.symmratio,self.delta,self.phic,self.tc,self.chi_a,self.chi_s,self.beta1)
