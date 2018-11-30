@@ -844,7 +844,11 @@ class IMRPhenomD():
         return fisher,inv_fisher,cholo
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - Vectorized"""
-    def calculate_waveform_derivative_vector(self,famp,fphase,i):
+    def calculate_waveform_derivative_vector(self,freq,i):
+        
+        famp = self.split_freqs_amp(freq)
+        fphase = self.split_freqs_phase(freq)
+
         """Array of the functions used to populate derivative vectors"""
         ampfunc = [self.amp_ins_vector,self.amp_int_vector,self.amp_mr_vector]
         phasefunc = [self.phase_ins_vector,self.phase_int_vector,self.phase_mr_vector]
@@ -974,7 +978,6 @@ class IMRPhenomD():
     int_scheme should be left with simps - orders of magnitude faster than quad, and interpolating the noise data
     makes it debatable whether the accuracy is better than simps"""
     def calculate_fisher_matrix_vector(self,detector,int_scheme = 'simps',stepsize=None,lower_freq = None, upper_freq=None):
-        start = time()
         if int_scheme == 'simps':
             int_func = integrate.simps
         elif int_scheme == 'trapz':
@@ -1036,12 +1039,9 @@ class IMRPhenomD():
             int_freq = np.asarray(freq[flow_pos:fup_pos])
             noise_integrand = self.noise_curve[flow_pos:fup_pos]
 
-            amp_freqs = self.split_freqs_amp(int_freq)
-            phase_freqs = self.split_freqs_phase(int_freq)
-
             waveform_derivs = []
             for i in variable_indicies:
-                waveform_derivs.append(self.log_factors[i]*self.calculate_waveform_derivative_vector(amp_freqs,phase_freqs,i))
+                waveform_derivs.append(self.log_factors[i]*self.calculate_waveform_derivative_vector(int_freq,i))
             for i in variable_indicies:
                 for j in range(1,i+1):
                     integrand = np.multiply(4,np.divide(np.real(np.multiply(waveform_derivs[i-1],np.conj(waveform_derivs[j-1]))),np.multiply(noise_integrand,noise_integrand)))

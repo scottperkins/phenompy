@@ -13,12 +13,12 @@ s_solm = G / consts.c.value**3#G/c**3#seconds per solar mass =492549095*10**(-14
 mpc = 1/consts.c.to('Mpc/s').value#consts.kpc.to('m')*1000/c#Mpc in sec =3085677581*10**(13)/c
 H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
 hplanck = consts.h.to('eV s').value #Planck Constant in eV s
-# c = 299792458#consts.c #Speed of light m/s
-# G = 6.674*10**(-11)*(1.98855*10**30)#consts.G.to('m**3/(s**2*solMass)') #Gravitational constant in m**3/(s**2 SolMass)
-# s_solm =492549095*10**(-14) #G/c**3#seconds per solar mass
-# mpc = 3085677581*10**(13)/c #consts.kpc.to('m')*1000/c#Mpc in sec
-# H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
-# hplanck = 4.135667662e-15 #ev s
+#c = 299792458#consts.c #Speed of light m/s
+#G = 6.674*10**(-11)*(1.98855*10**30)#consts.G.to('m**3/(s**2*solMass)') #Gravitational constant in m**3/(s**2 SolMass)
+#s_solm =492549095*10**(-14) #G/c**3#seconds per solar mass
+#mpc = 3085677581*10**(13)/c #consts.kpc.to('m')*1000/c#Mpc in sec
+#H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
+#hplanck = 4.135667662e-15 #ev s
 
 """Generic, short, simple functions that can be easily separated from a specific model"""
 ###########################################################################################

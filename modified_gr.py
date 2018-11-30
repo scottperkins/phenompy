@@ -337,7 +337,11 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - Vectorized
     -added extra mod_phi argument"""
-    def calculate_waveform_derivative_vector(self,famp,fphase,i):
+    def calculate_waveform_derivative_vector(self,freq,i):
+
+        famp = self.split_freqs_amp(freq)
+        fphase = self.split_freqs_phase(freq)
+
         """Array of the functions used to populate derivative vectors"""
         ampfunc = [self.amp_ins_vector,self.amp_int_vector,self.amp_mr_vector]
         phasefunc = [self.phase_ins_vector,self.phase_int_vector,self.phase_mr_vector]
@@ -827,7 +831,11 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - Vectorized
     -added extra mod_phi argument"""
-    def calculate_waveform_derivative_vector(self,famp,fphase,i):
+    def calculate_waveform_derivative_vector(self,freq,i):
+    
+        famp = self.split_freqs_amp(freq)
+        fphase = self.split_freqs_phase(freq)
+        
         """Array of the functions used to populate derivative vectors"""
         ampfunc = [self.amp_ins_vector,self.amp_int_vector,self.amp_mr_vector]
         phasefunc = [self.phase_ins_vector,self.phase_int_vector,self.phase_mr_vector]
@@ -1293,7 +1301,11 @@ class Modified_IMRPhenomD_All_Transition_Freq(IMRPhenomD):
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - Vectorized
     -added extra mod_phi argument"""
-    def calculate_waveform_derivative_vector(self,famp,fphase,i):
+    def calculate_waveform_derivative_vector(self,freq,i):
+        
+        famp = self.split_freqs_amp(freq)
+        fphase = self.split_freqs_phase(freq)
+
         """Array of the functions used to populate derivative vectors"""
         ampfunc = [self.amp_ins_vector,self.amp_int_vector,self.amp_mr_vector]
         phasefunc = [self.phase_ins_vector,self.phase_int_vector,self.phase_mr_vector]
