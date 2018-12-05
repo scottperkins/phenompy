@@ -841,11 +841,11 @@ class IMRPhenomD():
             cholo = False
         self.fisher = fisher
         self.inv_fisher = inv_fisher
-        return fisher,inv_fisher,cholo
+        return fisher,inv_fisher
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - Vectorized"""
     def calculate_waveform_derivative_vector(self,freq,i):
-        
+         
         famp = self.split_freqs_amp(freq)
         fphase = self.split_freqs_phase(freq)
 
@@ -965,7 +965,7 @@ class IMRPhenomD():
                 freq = np.arange(1,10000,stepsize)
             noise_curve = noise_utilities.noise_decigo(np.asarray(freq))
             noise_func = noise_utilities.noise_decigo
-        if detector == 'Hanford_O2':
+        elif detector == 'Hanford_O2':
             freq = noise_utilities.noise_hanford_O2[0]
             noise_curve = noise_utilities.noise_hanford_O2[1]
             if int_scheme == 'quad':
@@ -985,6 +985,7 @@ class IMRPhenomD():
     int_scheme should be left with simps - orders of magnitude faster than quad, and interpolating the noise data
     makes it debatable whether the accuracy is better than simps"""
     def calculate_fisher_matrix_vector(self,detector,int_scheme = 'simps',stepsize=None,lower_freq = None, upper_freq=None):
+
         if int_scheme == 'simps':
             int_func = integrate.simps
         elif int_scheme == 'trapz':
@@ -1069,7 +1070,7 @@ class IMRPhenomD():
             cholo = False
         self.fisher = fisher
         self.inv_fisher = inv_fisher
-        return fisher,inv_fisher,cholo
+        return fisher,inv_fisher
 
 
 

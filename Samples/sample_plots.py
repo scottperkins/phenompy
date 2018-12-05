@@ -3,35 +3,40 @@
 phase, waveform, and one of the parameter derivatives"""
 ####################################################################
 
-
-import IMRPhenomD as imr
+from phenompy.gr import IMRPhenomD as imr
 import matplotlib.pyplot as plt
 import numpy as np
+from phenompy.utilities import c, mpc, s_solm #importing constants - s_solm is the mass of the 
+                                               #sun in seconds, mpc is a megaparsec in seconds,
+                                                # and c is c in meters/sec    
+import astropy.cosmology as cosmology
 
 show_plots = True
 
-mpc = imr.mpc
-c = imr.c
-s_solm = imr.s_solm
-
+#Defining Parameters for the model 
 dl = 420*mpc
 mass1 =36*s_solm
 mass2 =29*s_solm
 spin1 = 0.32
 spin2 = 0.44
-detect = 'aLIGO'
+detect = 'aLIGO'#This will be the detector for calculating Fisher Matricies
 NSflag = False
 
-model1 = imr.IMRPhenomD(mass1,mass2,spin1,spin2,0,0,dl,N_detectors = 1,NSflag=NSflag)
+model1 = imr(mass1 = mass1,mass2 = mass2, spin1 = spin1,spin2 = spin2,collision_time=0,collision_phase= 0,Luminosity_Distance = dl,  N_detectors = 1,NSflag=NSflag, cosmo_model = cosmology.Planck15)
 
-model1.calculate_derivatives()#This is only necessary to plot the derivative - precompiles various derivatives for speed
+
+
+#For speed in caclulating Fishers, some parts of the derivatives are precomputed and stored, so this command must first be run to initialize those values:
+model1.calculate_derivatives()
+
 
 # Plot Example Output
 frequencies = np.linspace(1,5000,1e6)
-frequencies = np.linspace(1e-4,.001,1e5)
+#Calculates the waveform - 
 Amp,phase,h = model1.calculate_waveform_vector(frequencies)
 
-eta_deriv = model1.log_factors[5]*model1.calculate_waveform_derivative_vector(model1.split_freqs_amp(frequencies),model1.split_freqs_phase(frequencies),5)
+#Calculate the derivative wrt the symmetric mass ratio, which is parameter 5, :
+eta_deriv = model1.calculate_waveform_derivative_vector(frequencies,5)
 fig, axes = plt.subplots(2,2)
 axes[0,0].plot(frequencies,Amp)
 axes[0,0].set_xscale('log')
