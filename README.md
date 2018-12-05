@@ -83,7 +83,7 @@ f_int_mr - frequency in Hz at which the model should transition from the PN wave
 **Modified_IMRPhenomD_All_Transition_Freq** - same as above, but also includes the transition frequency from inspiral to intermediate waveforms as well
 
 
-##Useful Functions
+## Useful Functions
 
 accesible though all classes: 
 
