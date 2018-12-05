@@ -19,44 +19,68 @@ pip install {autograd,multiprocessing,astropy}
 
 To be able to access this code through your path, either download this project into a folder already included in the $PYTHONPATH variable, or add the downloaded folder to your path manually, through the .bashrc file (most common solution).
 
+## Files
+
+gr.py contains a majority of the code. It houses the GR PhenomD algorithm and Fisher analysis, as well as the extensions to GR that don't consitute modifications to the theory of gravity.
+
+modified_gr.py contains the classes that model extended theories of gravity, including a general PPE class for modelling parameterized post-Einsteinian modifications for the full and inspiral only frequency ranges, with and without SPA correction terms to the phase for both the ppE parameter and the GR phase. It also houses classes for including the transition frequency from inspiral to Merger-Ringdown as an extra parameter.
+
+utilities.py contains general functions utilized in all the other files, including chirp mass and symmetric mass ratio calculations, etc.
+
+noise_utilities.py includes all the spectral noise densities for various detectors.
+
+analysis_utilities.py includes functions that are useful for post- model creation analysis, including some mapping functions from ppE parameters to physical parameters. 
 
 
 ## Classes
 
 In gr.py:
 
-IMRPhenomD - 
+IMRPhenomD - Class that computes waveforms, waveform derivatives, and Fisher matrices in GR
 
 mass1 - Mass of the larger object
+
 mass2 - Mass of the smaller object 
+
 spin1 - Dimensionless spin of object 1 
+
 spin2 - Dimensionless spin of object 2 
+
 collision_time - time of coalescence (set to 0 generally) 
+
 collision_phase - phase at the time of coalescence (set to 0 generally) 
+
 Luminosity_Distance - Luminosity distance to the source  
+
 cosmo_model - Cosmological model from astropy (default is Planck15), see http://docs.astropy.org/en/stable/cosmology/ 
+
 NSflag - Either true or false to set the limits of integration
+
 N_Detectors - The number of detectors (set to 1 by default)
 
-### Break down into end to end tests
 
-Explain what these tests test and why
+IMRPhenomD_Full_Freq_SPA - Same as IMRPhenomD, but with a phase term that is the next order correction to the SPA approximation. See https://arxiv.org/abs/gr-qc/9901076
 
-```
-Give an example
-```
+IMRPhenomD_Inspiral_Freq_SPA - Same as above, but it only includes the correction to the inspiral portion of the phase.
 
-### And coding style tests
 
-Explain what these tests test and why
+In modified_gr.py
 
-```
-Give an example
-```
+Modified_IMRPhenomD_Full_Freq - Class that incorporates a ppE phase parameter into the GR waveform of IMRPhenomD - same arguments with the following additions:
 
-## Deployment
+bppe - power of the modification:  delta phi = (pi Chirp Mass f)^(-bppe/3) 
 
-Add additional notes about how to deploy this on a live system
+Modified_IMRPhenomD_Inspiral_Freq - same as above, but the modification is only present in the inspiral portion. Good for modelling generation effects where the correction might not be accurate for higher frequencies. 
+
+Modified_IMRPhenomD_Full_Freq_SPA - ppE waveform with SPA correction for both the GR phase and the ppE parameter 
+
+Modified_IMRPhenomD_Inspiral_Freq_SPA - same as above, but only for the inspiral portion
+
+Modified_IMRPhenomD_Transition_Freq - GR Waveform that treats the transition frequency as a model parameter for Fisher Calculations - extra argument 
+
+f_int_mr - frequency in Hz at which the model should transition from the PN waveform to the merger-ringdown waveform
+
+Modified_IMRPhenomD_All_Transition_Freq - same as above, but also includes the transition frequency from inspiral to intermediate waveforms as well
 
 
 
