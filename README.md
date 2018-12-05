@@ -26,6 +26,7 @@ To be able to access this code through your path, either download this project i
 In gr.py:
 
 IMRPhenomD - 
+
 mass1 - Mass of the larger object
 mass2 - Mass of the smaller object 
 spin1 - Dimensionless spin of object 1 
