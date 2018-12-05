@@ -136,6 +136,8 @@ Returns:
 Fisher matrix - NxN Fisher matrix for N parameters - for IMRPhenomD the parameters (in order) are [lnA, phi_c, t_c,ln Chirp Mass, ln Symmetric Mass Ratio, chi_s, chi_a]
 
 Inverse_fisher - the inverse of the above fisher matrix
+
+**Detector Names (MUST BE SPELLED EXACTLY)** - [ 'aLIGO', 'A+', 'A++', 'Vrt', 'Voyager', 'CE1', 'CE2 wide', 'CE2 narrow', 'ET-B', 'ET-D', 'LISA', 'aLIGOAnalytic', 'Hanford_O1', 'Hanford_O2', 'DECIGO']
 ## Contributing
 
 Please email me at scottperkins2@montana.edu if you are interested in contributing.
