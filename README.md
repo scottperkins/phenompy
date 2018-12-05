@@ -117,6 +117,10 @@ Chi_s = 6
 
 chi_a = 7
 
+Returns:
+
+Re[d h/ d theta] as an array 
+
 **calculate_fisher_matrix_vector** - Calculates the fisher matrix for a given model. There is a loop version, **calculate_fisher_matrix**, but it is much slower.
 
 Arguments: 
