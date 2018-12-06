@@ -84,12 +84,15 @@ def likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)
     h_complex = np.multiply(amp,np.add(np.cos(phase),1j*np.sin(phase)))
     noise_temp,noise_func, freq = model.populate_noise(detector=detector,int_scheme='quad')
-    integrand_numerator = np.multiply(np.conjugate(Data), h_complex) + np.multiply(Data,np.conjugate( h_complex))   
+    resid = np.subtract(Data,h_complex)
+    #integrand_numerator = np.multiply(np.conjugate(Data), h_complex) + np.multiply(Data,np.conjugate( h_complex))
+    integrand_numerator = np.multiply(resid,np.conjugate(resid))
+
     noise_root =noise_func(frequencies)
     noise = np.multiply(noise_root, noise_root)
     integrand = np.divide(integrand_numerator,noise)
     integral = np.real(simps(integrand,frequencies))
-    return 2*integral 
+    return 4*integral 
 ###########################################################################################
     print(mass1,mass2)
 
