@@ -411,7 +411,7 @@ class IMRPhenomD():
         # freqint = freqs[(freqs>0.014/self.M) & (freqs<self.fpeak)]
         #freqint = np.asarray([x for x in freqs if x> 0.014/self.M and x <= self.fpeak])
         temp1 = np.extract(freqs>0.014/self.M,freqs)
-        freqint = np.extract(temp1<=self.fpeak, freqs)
+        freqint = np.extract(temp1<=self.fpeak, temp1)
         # freqmr = freqs[(freqs>self.fpeak)]
         #freqmr = np.asarray([x for x in freqs if x > self.fpeak])
         freqmr = np.extract(freqs>self.fpeak, freqs)
@@ -422,7 +422,7 @@ class IMRPhenomD():
         freqins = np.extract(freqs<=0.018/self.M, freqs)
         #freqint = freqs[(freqs>0.018/self.M) & (freqs<=self.fRD*0.5)]
         temp1 = np.extract(freqs>0.018/self.M,freqs)
-        freqint = np.extract(temp1<=self.fRD*0.5, freqs)
+        freqint = np.extract(temp1<=self.fRD*0.5, temp1)
         #freqmr = freqs[(freqs>self.fRD*0.5)]
         freqmr = np.extract(freqs>self.fRD*0.5,freqs)
         return [freqins,freqint,freqmr]
