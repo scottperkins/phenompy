@@ -405,16 +405,26 @@ class IMRPhenomD():
     ###########################################################################################################
     """Split frequencies into ranges - inspiral, intermediate, Merger-Ringdown"""
     def split_freqs_amp(self,freqs):
-        freqins = freqs[(freqs<=0.014/self.M)]
+        freqs = np.asarray(freqs)
+        #freqins = freqs[(freqs<=0.014/self.M)]
+        freqins = np.extract(freqs<=0.014/self.M, freqs)
         # freqint = freqs[(freqs>0.014/self.M) & (freqs<self.fpeak)]
-        freqint = np.asarray([x for x in freqs if x> 0.014/self.M and x <= self.fpeak])
+        #freqint = np.asarray([x for x in freqs if x> 0.014/self.M and x <= self.fpeak])
+        temp1 = np.extract(freqs>0.014/self.M,freqs)
+        freqint = np.extract(temp1<=self.fpeak, freqs)
         # freqmr = freqs[(freqs>self.fpeak)]
-        freqmr = np.asarray([x for x in freqs if x > self.fpeak])
+        #freqmr = np.asarray([x for x in freqs if x > self.fpeak])
+        freqmr = np.extract(freqs>self.fpeak, freqs)
         return [freqins,freqint,freqmr]
     def split_freqs_phase(self,freqs):
-        freqins = freqs[(freqs<=0.018/self.M)]
-        freqint = freqs[(freqs>0.018/self.M) & (freqs<=self.fRD*0.5)]
-        freqmr = freqs[(freqs>self.fRD*0.5)]
+        freqs = np.asarray(freqs)
+        #freqins = freqs[(freqs<=0.018/self.M)]
+        freqins = np.extract(freqs<=0.018/self.M, freqs)
+        #freqint = freqs[(freqs>0.018/self.M) & (freqs<=self.fRD*0.5)]
+        temp1 = np.extract(freqs>0.018/self.M,freqs)
+        freqint = np.extract(temp1<=self.fRD*0.5, freqs)
+        #freqmr = freqs[(freqs>self.fRD*0.5)]
+        freqmr = np.extract(freqs>self.fRD*0.5,freqs)
         return [freqins,freqint,freqmr]
 
     """Calculate the waveform - vectorized

@@ -11,6 +11,7 @@ from astropy.coordinates import Distance
 from astropy import units as u
 import csv
 from scipy.interpolate import interp1d
+from time import time
 
 s_solm = utilities.s_solm
 mpc = utilities.mpc
@@ -78,6 +79,7 @@ def likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
     model = modimr(mass1=mass1,mass2=mass2, spin1=chi1,spin2=chi2, collision_time=t_c,collision_phase=phi_c,
                     Luminosity_Distance=DL, phase_mod=beta, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
+    start = time()
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)
     h_complex = np.multiply(amp,np.add(np.cos(phase),1j*np.sin(phase)))

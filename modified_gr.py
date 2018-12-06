@@ -439,6 +439,7 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
 
         famp = self.split_freqs_amp(freq)
         fphase = self.split_freqs_phase(freq)
+        
 
         jamp = [0,1,2]
         for i in np.arange(len(famp)):
