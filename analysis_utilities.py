@@ -67,7 +67,7 @@ def LumDist_SNR_assist(mass1, mass2,spin1,spin2,DL,cosmo_model,NSflag ,N_detecto
 ###########################################################################################
 #Liklihood function for a data stream and ppE parameter wavefunction
 ###########################################################################################
-def likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio, 
+def log_likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio, 
                 chi_s,chi_a,beta,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
     DL = ((np.pi/30)**(1/2)/A0 ) * chirpm**2 * (np.pi*chirpm)**(-7/6)
     Z = Distance(DL/mpc,unit=u.Mpc).compute_z(cosmology = cosmology) 
@@ -92,7 +92,7 @@ def likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
     noise = np.multiply(noise_root, noise_root)
     integrand = np.divide(integrand_numerator,noise)
     integral = np.real(simps(integrand,frequencies))
-    return 4*integral 
+    return -2*integral 
 ###########################################################################################
     print(mass1,mass2)
 
