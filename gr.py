@@ -2,7 +2,7 @@
 import autograd.numpy as np
 import numpy
 from scipy import integrate
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, interp1d
 import autograd.scipy.linalg as spla
 import math
 import csv
