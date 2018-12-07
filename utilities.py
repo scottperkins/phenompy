@@ -217,3 +217,17 @@ def calculate_delta_parameter_4(f1,f2,f3,v1,v2,v3,dd1,dd3,M):
    3*f2**2*f3*v1 + 3*f1*f3**2*v1 - f3**3*v1 - f1**3*v2 + 3*f1**2*f3*v2 - 3*f1*f3**2*v2 + \
    f3**3*v2 + f1**3*v3 - 3*f1*f2**2*v3 + 2*f2**3*v3 - 3*f1**2*f3*v3 + 6*f1*f2*f3*v3 - \
    3*f2**2*f3*v3)/((f1 - f2)**2*(f1 - f3)**3*(f2 - f3)**2*M**4))
+
+
+###########################################################################################################
+#dCS g func for phase modification - \delta \phi = Zeta *g(eta,chirp mass, chi_s, chi_a) (\pi chirpm f)**(-1/3)
+###########################################################################################
+
+def dCS_g(chirpm,symmratio,chi_s,chi_a): 
+    coeff = 1549225/11812864 
+    m1 = calculate_mass1(chirpm,symmratio) 
+    m2 = calculate_mass2(chirpm,symmratio) 
+    m = calculate_totalmass(chirpm,symmratio) 
+    delta = (m1-m2)/m 
+    return coeff/symmratio**(14/5) * ( ( 1-231808/61969 * symmratio)*chi_s**2 + 
+            (1 - 16068/61969 *symmratio)*chi_a**2 - 2 * delta * chi_s * chi_a)
