@@ -6,6 +6,7 @@ from phenompy.gr import IMRPhenomD
 from phenompy import utilities
 from phenompy.modified_gr import Modified_IMRPhenomD_Full_Freq as modimr
 from phenompy.modified_gr import Modified_IMRPhenomD_Inspiral_Freq as modimrins
+from phenompy.modified_gr import dCS_IMRPhenomD as dcsimr
 import os
 import matplotlib.pyplot as plt
 from astropy.coordinates import Distance
@@ -107,8 +108,8 @@ def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin
     chirpme = chirpm/(1+Z)
     mass1 = utilities.calculate_mass1(chirpme,symmratio)
     mass2 = utilities.calculate_mass2(chirpme,symmratio)
-    model = modimrins(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
-                    Luminosity_Distance=DL, phase_mod=alpha_squared, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
+    model = dcsimr(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
+                    Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)

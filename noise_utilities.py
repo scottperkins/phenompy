@@ -66,11 +66,11 @@ def noise_decigo(f):
 #fig,ax = plt.subplots()
 #for i in np.arange(len(noise[1:])):
 #    ax.plot(noise[0],noise[i+1],label = names[i])
-#
+
 #ax.plot(np.linspace(10.,2500,1e5),noise_hanford_O1(np.linspace(10.,2000,1e5)),label='fitted Hanford Noise',linestyle='--')
-#
+
 #ax.plot(np.linspace(1e-3,100,1e5),noise_decigo(np.linspace(1e-3,100,1e5)),label='DECIGO',linestyle='-.')
-#
+
 #ax.plot(noise_lisa[0],noise_lisa[1],label='LISA')
 #ax.plot(noise_hanford_O2[0],noise_hanford_O2[1],label='O2 hanford')
 #ax.set_xscale('log')
