@@ -5,6 +5,7 @@ from scipy.integrate import simps
 from phenompy.gr import IMRPhenomD
 from phenompy import utilities
 from phenompy.modified_gr import Modified_IMRPhenomD_Full_Freq as modimr
+from phenompy.modified_gr import Modified_IMRPhenomD_Inspiral_Freq as modimrins
 import os
 import matplotlib.pyplot as plt
 from astropy.coordinates import Distance
@@ -65,9 +66,10 @@ def LumDist_SNR_assist(mass1, mass2,spin1,spin2,DL,cosmo_model,NSflag ,N_detecto
 
 
 ###########################################################################################
-#Liklihood function for a data stream and ppE parameter wavefunction
+#Liklihood function for a data stream and ppE parameter wavefunction for DETECTOR Frame
+#parameters and for inspiral only
 ###########################################################################################
-def log_likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio, 
+def log_likelihood_Full(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio, 
                 chi_s,chi_a,beta,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
     DL = ((np.pi/30)**(1/2)/A0 ) * chirpm**2 * (np.pi*chirpm)**(-7/6)
     Z = Distance(DL/mpc,unit=u.Mpc).compute_z(cosmology = cosmology) 
@@ -76,7 +78,7 @@ def log_likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
     mass2 = utilities.calculate_mass2(chirpme,symmratio)
     chi1 = chi_s +chi_a 
     chi2 = chi_s - chi_a
-    model = modimr(mass1=mass1,mass2=mass2, spin1=chi1,spin2=chi2, collision_time=t_c,collision_phase=phi_c,
+    model = modimrins(mass1=mass1,mass2=mass2, spin1=chi1,spin2=chi2, collision_time=t_c,collision_phase=phi_c,
                     Luminosity_Distance=DL, phase_mod=beta, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
     start = time()
@@ -94,8 +96,34 @@ def log_likelihood(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
     integral = np.real(simps(integrand,frequencies))
     return -2*integral 
 ###########################################################################################
-    print(mass1,mass2)
 
+###########################################################################################
+#Liklihood function for a data stream and ppE parameter wavefunction for SOURCE Frame
+#parameters and for inspiral only and in SECONDS
+###########################################################################################
+def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, 
+                chi_s,chi_a,beta,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    chi1 = chi_s +chi_a 
+    chi2 = chi_s - chi_a
+    model = modimrins(mass1=mass1,mass2=mass2, spin1=chi1,spin2=chi2, collision_time=t_c,collision_phase=phi_c,
+                    Luminosity_Distance=DL, phase_mod=beta, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
+                    N_detectors = N_detectors) 
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = model.calculate_waveform_vector(frequencies)
+    h_complex = np.multiply(amp,np.add(np.cos(phase),1j*np.sin(phase)))
+    noise_temp,noise_func, freq = model.populate_noise(detector=detector,int_scheme='quad')
+    resid = np.subtract(Data,h_complex)
+    #integrand_numerator = np.multiply(np.conjugate(Data), h_complex) + np.multiply(Data,np.conjugate( h_complex))
+    integrand_numerator = np.multiply(resid,np.conjugate(resid))
+
+    noise_root =noise_func(frequencies)
+    noise = np.multiply(noise_root, noise_root)
+    integrand = np.divide(integrand_numerator,noise)
+    integral = np.real(simps(integrand,frequencies))
+    return -2*integral 
+###########################################################################################
 ###########################################################################################
 ###########################################################################################
 """Functions specific to constraining th graviton mass in screened gravity - see arXiv:1811.02533"""

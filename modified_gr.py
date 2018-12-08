@@ -1502,3 +1502,17 @@ class Modified_IMRPhenomD_All_Transition_Freq(IMRPhenomD):
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[7],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[8],
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[9])
+
+
+class dCS_IMRPhenomD(Modified_IMRPhenomD_Inspiral_Freq):
+    def __init__(self, mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = 0,
+                    cosmo_model = cosmology.Planck15,NSflag = False,N_detectors = 1):
+        super(dCS_IMRPhenomD,self).__init__(mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = phase_mod,bppe = -1,
+                    cosmo_model = cosmo_model,NSflag = NSflag,N_detectors = N_detectors)
+    def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        m = utilities.calculate_totalmass(chirpm,symmratio)
+        return (IMRPhenomD.phi_ins(
+                self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+                + 16*np.pi*phase_mod * utilities.dCS_g(chirpm,symmratio,chi_s,chi_a)/m**4 * (np.pi * chirpm* f)**(self.bppe/3))
