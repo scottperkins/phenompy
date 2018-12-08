@@ -98,18 +98,17 @@ def log_likelihood_Full(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
 ###########################################################################################
 
 ###########################################################################################
-#Liklihood function for a data stream and ppE parameter wavefunction for SOURCE Frame
+#Liklihood function for a data stream and ppE parameter wavefunction for DETECTOR Frame
 #parameters and for inspiral only and in SECONDS
 ###########################################################################################
-def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, 
-                chi_s,chi_a,beta,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
-    chirpm = chirpm*s_solm
-    mass1 = utilities.calculate_mass1(chirpm,symmratio)
-    mass2 = utilities.calculate_mass2(chirpm,symmratio)
-    chi1 = chi_s +chi_a 
-    chi2 = chi_s - chi_a
-    model = modimrins(mass1=mass1,mass2=mass2, spin1=chi1,spin2=chi2, collision_time=t_c,collision_phase=phi_c,
-                    Luminosity_Distance=DL, phase_mod=beta, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
+def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
+    Z = Distance(DL/mpc,unit=u.Mpc).compute_z(cosmology = cosmology) 
+    chirpme = chirpm/(1+Z)
+    mass1 = utilities.calculate_mass1(chirpme,symmratio)
+    mass2 = utilities.calculate_mass2(chirpme,symmratio)
+    model = modimrins(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
+                    Luminosity_Distance=DL, phase_mod=alpha_squared, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)
