@@ -51,11 +51,12 @@ hplanck = utilities.hplanck
 """Calculate luminositiy distance for a desired SNR and model - 
     Assumed to be GR (should be the null hypothesis)"""
 ###########################################################################################
-def LumDist_SNR(mass1, mass2,spin1,spin2,cosmo_model = cosmology.Planck15,NSflag = False,N_detectors=1,detector='aLIGO',SNR_target=10,lower_freq=None,upper_freq=None):
+def LumDist_SNR(mass1, mass2,spin1,spin2,cosmo_model = cosmology.Planck15,NSflag = False,N_detectors=1,detector='aLIGO',SNR_target=10,lower_freq=None,upper_freq=None,initial_guess = 100):
+    initial_guess = initial_guess*mpc
     D_L_target = fsolve(
             lambda l: SNR_target - LumDist_SNR_assist(mass1=mass1, mass2=mass2,spin1=spin1,spin2=spin2,
                         DL=l,cosmo_model = cosmo_model,NSflag = NSflag,N_detectors=N_detectors,
-                        detector=detector,lower_freq=lower_freq,upper_freq=upper_freq),100*mpc)[0]
+                        detector=detector,lower_freq=lower_freq,upper_freq=upper_freq),initial_guess)[0]
     return D_L_target/mpc
 def LumDist_SNR_assist(mass1, mass2,spin1,spin2,DL,cosmo_model,NSflag ,N_detectors,detector,lower_freq,upper_freq):
     temp_model = IMRPhenomD(mass1=mass1, mass2=mass2,spin1=spin1,spin2=spin2, collision_time=0, \
@@ -81,7 +82,6 @@ def log_likelihood_Full(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
     model = modimrins(mass1=mass1,mass2=mass2, spin1=chi1,spin2=chi2, collision_time=t_c,collision_phase=phi_c,
                     Luminosity_Distance=DL, phase_mod=beta, bppe=bppe,cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
-    start = time()
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)
     h_complex = np.multiply(amp,np.add(np.cos(phase),1j*np.sin(phase)))
@@ -103,6 +103,7 @@ def log_likelihood_Full(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
 ###########################################################################################
 def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, 
                 chi_s,chi_a,beta,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
+    chirpm = chirpm*s_solm
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
     chi1 = chi_s +chi_a 
