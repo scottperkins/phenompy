@@ -73,7 +73,7 @@ def LumDist_SNR_lite(chirpmass,detector,SNR_target,rho_prime=None, N_detectors =
         numerator = np.asarray([x**(-7/3) for x in freq])
         noise = np.multiply(noise_root,noise_root)
         integral =simps(np.divide(numerator,noise),freq)
-        rho_prime = SNR_target/(np.sqrt(np.pi/30) * 2 *np.pi**(-7/6) * np.sqrt(integral))
+        rho_prime = SNR_target/(np.sqrt(N_detectors)*np.sqrt(np.pi/30) * 2 *np.pi**(-7/6) * np.sqrt(integral))
     return (chirpmass**2 * chirpmass**(-7/6) / rho_prime) 
 
 
