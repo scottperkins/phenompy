@@ -65,6 +65,16 @@ def LumDist_SNR_assist(mass1, mass2,spin1,spin2,DL,cosmo_model,NSflag ,N_detecto
     SNR_temp = temp_model.calculate_snr(detector=detector,lower_freq=lower_freq,upper_freq=upper_freq)
     return SNR_temp
 ###########################################################################################
+def LumDist_SNR_lite(chirpmass,detector,SNR_target,rho_prime=None):
+    if rho_prime == None:
+        noise_root,noise_func,freq = IMRPhenomD.populate_noise(detector=detector)
+        freq = np.asarray(freq)
+        noise_root = np.asarray(noise_root)
+        numerator = np.asarray([x**(-7/3) for x in freq])
+        noise = np.multiply(noise_root,noise_root)
+        integral =simps(np.divide(numerator,noise),freq)
+        rho_prime = SNR_target/(np.sqrt(np.pi/30) * 2 *np.pi**(-7/6) * np.sqrt(integral))
+    return (chirpmass**2 * chirpmass**(-7/6) / rho_prime) 
 
 
 ###########################################################################################

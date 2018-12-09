@@ -774,7 +774,7 @@ class IMRPhenomD():
         # else:
         #     print('DETECTOR ISSUE - check to make sure the detector name is spelled exactly as in {},{},{},{}'.format(names,'aLIGOAnalytic','aLIGOFitted','DECIGO'))
         #     return 0,0,0
-        self.noise_curve, self.noise_func, freq = self.populate_noise(detector, int_scheme, stepsize)
+        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector, int_scheme, stepsize)
 
         if lower_freq == None:
             self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
@@ -943,7 +943,8 @@ class IMRPhenomD():
         """Return the complex waveform derivative"""
         return np.subtract(gampout,np.multiply(ampout,np.multiply(1j,phaseout)))
 
-    def populate_noise(self, detector='aLIGO',int_scheme='simps',stepsize = None):
+    @staticmethod
+    def populate_noise( detector='aLIGO',int_scheme='simps',stepsize = None):
         names = [ 'aLIGO', 'A+', 'A++', 'Vrt', 'Voyager', 'CE1', 'CE2 wide', 'CE2 narrow', 'ET-B', 'ET-D']
         freq = noise_utilities.noise[0]
         if detector in names:
@@ -1003,7 +1004,7 @@ class IMRPhenomD():
         else:
             int_func= integrate.quad
 
-        self.noise_curve, self.noise_func, freq = self.populate_noise(detector, int_scheme, stepsize)
+        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector, int_scheme, stepsize)
 
         if lower_freq == None:
             self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
@@ -1087,7 +1088,7 @@ class IMRPhenomD():
     """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
     **NOTE** I'm using trimmed frequencies here. Should I be using the full 10000 Hz range?"""
     def calculate_snr(self,detector='aLIGO',lower_freq=None,upper_freq=None):
-        self.noise_curve, self.noise_func, freq = self.populate_noise(detector=detector)
+        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector=detector)
         if len(self.noise_curve) == 0:
             return "ERROR in noise_curve population"
 

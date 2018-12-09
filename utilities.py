@@ -20,6 +20,8 @@ hplanck = consts.h.to('eV s').value #Planck Constant in eV s
 #H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubble constant in [1/Mpc]
 #hplanck = 4.135667662e-15 #ev s
 
+
+
 """Generic, short, simple functions that can be easily separated from a specific model"""
 ###########################################################################################
 """Calculates the total mass given symmratio and chirp mass"""
