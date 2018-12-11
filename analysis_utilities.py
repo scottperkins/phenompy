@@ -135,6 +135,28 @@ def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin
     integral = np.real(simps(integrand,frequencies))
     return -2*integral 
 ###########################################################################################
+def log_likelihood_GR(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
+                NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
+    Z = Distance(DL/mpc,unit=u.Mpc).compute_z(cosmology = cosmology) 
+    chirpme = chirpm/(1+Z)
+    mass1 = utilities.calculate_mass1(chirpme,symmratio)
+    mass2 = utilities.calculate_mass2(chirpme,symmratio)
+    model = IMRPhenomD(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
+                    Luminosity_Distance=DL, cosmo_model=cosmology,NSflag=NSflag,
+                    N_detectors = N_detectors) 
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = model.calculate_waveform_vector(frequencies)
+    h_complex = np.multiply(amp,np.add(np.cos(phase),1j*np.sin(phase)))
+    noise_temp,noise_func, freq = model.populate_noise(detector=detector,int_scheme='quad')
+    resid = np.subtract(Data,h_complex)
+    #integrand_numerator = np.multiply(np.conjugate(Data), h_complex) + np.multiply(Data,np.conjugate( h_complex))
+    integrand_numerator = np.multiply(resid,np.conjugate(resid))
+
+    noise_root =noise_func(frequencies)
+    noise = np.multiply(noise_root, noise_root)
+    integrand = np.divide(integrand_numerator,noise)
+    integral = np.real(simps(integrand,frequencies))
+    return -2*integral 
 ###########################################################################################
 ###########################################################################################
 """Functions specific to constraining th graviton mass in screened gravity - see arXiv:1811.02533"""
