@@ -17,12 +17,22 @@ def xi(m1,m2,S1, S2,L):
              ( 1 + 1/q) *np.sum(np.asarray( [S2[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) ))
 
     
-def theta_L(J, L, S):
-    J2 =   np.sum(np.asarray( [x**2 for x in J]))
-    L2 =    np.sum(np.asarray( [x**2 for x in L]))
-    S2 =    np.sum(np.asarray( [x**2 for x in S]))
+def theta_L(J2, L2, S2):
     return np.arccos((J2 + L2 - S2)/(2 * np.sqrt(J2*L2)))
 
+def L(eta, f,M):
+    return (2*np.pi*M*f)**(-1/3)*eta*M**2
+
+#PN expansion coefficient defined in PhysRevD.95.104004
+def v(f,M):
+    return (2 * np.pi*M * f)**(1/3)
+
+def S2(s1,s2):
+    stotal= np.asarray([s1[x]+s2[x] for x in np.arange(len(s1))])
+    return np.sum(np.asarray([x**2 for x in stotal]))
+
+def L_vec(L, theta_L):
+    return np.asarray([L*np.sin(theta_L), 0, L*np.cos(theta_L)])     
 ###############################################################################################
 def S1_2(A,B,C,D):
     return (-B/3. - (2**0.3333333333333333*(-B**2 + 3*C))/
