@@ -1,19 +1,32 @@
 import autograd.numpy as np
 import utilities as util
-
+from scipy.special import ellipj
 
 """A variety of utilities for the construction of the precessing model IMRPhenomPv3:"""
 
 ###############################################################################################
 #Foundational quantities PHYSICAL REVIEW D 95, 104004
+#Defining c1 from the initial parameters
+def c1(L0,J0,Sav, v0):
+    return (J0**2 -L**2 - Sav**2)*(v0/2)
 
+#All values are the initial values from the input parameters
+#Returns the initial magnitude of total angular momentum
+#form of S1_vec_0 = [S1_vec_0_x,S1_vec_0_y, S1_vec_0_z]
+def J0(L0,S1_vec_0,S2_vec_0):
+    theta_L_0 = np.arccos((S1_vec_0[0]+S2_vec_0[0])/L0)
+    return L0*np.sin(theta_L_0) + S1_vec_0[2] + S2_vec_0[2]
+   
+#Calculate J magnitude 
+def J(L,Sav,c1,v):
+    return L**2 + (2/v)*c1 + Sav**2
 #S1, S2, and L are 3D vectors - m1, m2 are scalars and in seconds
 def xi(m1,m2,S1, S2,L): 
     S1 = np.asarray(S1)
     S2 = np.asarray(S2)
     L = np.asarray(L)
     sumL = 0
-    L_hat = np.divide(L,np.sqrt( np.asarray( [x^2 for x in L]) ))
+    L_hat = np.divide(L,np.sqrt( np.sum(np.asarray( [x^2 for x in L]) )))
     q = m2/m1
     return ((1 + q) * np.sum(np.asarray( [S1[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) )+
              ( 1 + 1/q) *np.sum(np.asarray( [S2[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) ))
@@ -34,11 +47,73 @@ def v(f,M):
 def S2(s1,s2):
     stotal= np.asarray([s1[x]+s2[x] for x in np.arange(len(s1))])
     return np.sum(np.asarray([x**2 for x in stotal]))
+#overloaded method of above for calculating based on definitions in PhysRevD.95.104004 
+def S2(S_plus, S_minus, psi, m):
+    return S_plus**2 + (S_minus**2 - S_plus**2 )*ellipj(psi, m)
+
+#spin parameter for calculating S**2
+def m(S_plus,S_minus,S3):
+    return (S_plus**2 - S_minus**2)/(S_plus**2 - S3**2)
+
+def psi(psi0, psi1, psi2, g0, delta_m, v):
+    return psi0 - (3*g0)/4 * delta_m * v**(-3) * (1 + psi1*v + psi2 * v**2)
+
+def psi1(xi, eta, c1, delta_m):
+    return 3 * (2*xi * eta**2 - c1)/(eta * delta_m**2)
+
+def psi2(eta, delta_m, q, Delta, S1, S2, Sav, xi, g0, g2,c1):
+    term1 = 3*g2/g0 
+    term2 = 2*Delta
+    term3 = -2*eta**2*Sav**2/delta_m**2
+    term4 = -10 * eta * c1**2/delta_m**4
+    term5 = 2*eta**2/delta_m**2 * (7 + 6*q + 7 *q**2)/(1-q)**2 * c1 * xi
+    term6 = -eta**3/delta_m**2 * (3 + 4*q + 3*q**2)/(1-q)**2 * xi**2
+    term7 = eta/(1-q)**2 * ( q * (2+q)*S1**2 + (1+2*q)*S2**2)
+    return term1 + 3/(2*eta**3) * (term2 + term3 + term4 + term5 + term6 + term7) 
+
+def Delta(eta, q, delta_m, xi, S1, S2, c1):
+    term1 = c1**2* eta/(q*delta_m**4)
+    term2 = -2* c1 * eta**3 *(1+q)*xi/(q*delta_m**4)
+    term3 = -eta**2 / delta_m**4 * ( delta_m**2 * S1**2 - eta**2 * xi**2)
+    term4 = c1**2*eta**2/delta_m**4
+    term5 = -2* c1 * eta**3 *(1+q)*xi/(delta_m**4)
+    term6 = -eta**2 / delta_m**4 * ( delta_m**2 * S2**2 - eta**2 * xi**2)
+    return np.sqrt( (term1 + term2 + term3) * (term4 + term5 + term6) )
 
 #L is a magnitude
 def L_vec(L, theta_L):
     return np.asarray([L*np.sin(theta_L), 0, L*np.cos(theta_L)])     
 
+#S1 is a magnitude
+def S1prime_vec(S1, theta_prime, phi_prime):
+    return S1*np.asarray(   [np.sin(theta_prime)*np.cos(phi_prime), 
+                            np.sin(theta_prime)*np.sin(phi_prime),
+                            np.cos(phi_prime)])
+
+def theta_prime(S, S1, S2):
+    return np.arccos((S**2 + S1**2 + S2**2)/(2*S*S1))
+
+def phi_prime(J,L,S,q,S1,S2):
+    A1 = np.sqrt(J**2 - (L-S)**2)
+    A2 = np.sqrt((L+S)**2 - J**2)
+    A3 = np.sqrt(S**2 - (S1-S2)**2)
+    A4 = np.sqrt((S1+S2)**2 - S**2)
+    term1 = J**2 - L**2 - S**2
+    term2 = S**2 * (1+q)**2
+    term3 = -(S1**2 - S2**2)*(1-q**2)
+    term4 = -4*q*S**2 * L * xi
+    term5 = (1-q**2)*A1*A2*A3*A4
+    return np.arccos( (term1*(term2 + term3) + term4)/term5)
+
+def theta_s(J, S, L):
+    return np.arccos( (J**2 + S**2 - L**2)/(2*J*S) )
+
+def rot_y(theta):
+    s = np.sin(theta)
+    c = np.cos(theta)
+    return np.asarray(  [[c, 0, s],
+                        [0,1,0],
+                        [-s, 0, c]])
 ###############################################################################################
 #Finding S+ and S- PHYSICAL REVIEW D 95, 104004
 def S1_2(A,B,C,D):
@@ -176,6 +251,40 @@ def S1_dot_L_S2_dot_L_avg(c1,q,eta,xi,S_plus,S_minus,v0):
              S2_dot_L_squared_avg(c1,q,eta,xi,S_plus,S_minus,v0)
             - q*(S_plus**2 - S_minus**2)**2 * v0**2 / (32*eta**2 * (1-q)**2 ))
 
+def Sav(S_plus_0, S_minus_0):
+    return (1/2)*(S_plus_0**2 + S_minus_0**2)
+
+###############################################################################################
+#A,B,C,D coefficients for S_plus and S_minus -PHYSICAL REVIEW D 95, 104004
+def A(eta, xi, v):
+    return -(3/(2*np.sqrt(eta))) * v**6 * (1- xi*v)
+
+#L,S1,S2,J are magnitudes
+def B(L,S1,S2,J,xi,q):
+    term1 = (L**2 + S1**2)*q
+    term2 = 2*L*xi 
+    term3 = -2*J**2 
+    term4 = -(S1**2 + S2**2)
+    term5 = (L**2 + S2**2)/q
+    return term1+term2+term3+term4+term5
+
+#L,S1,S2,J are magnitudes
+def C(L,S1,S2,J,xi,delta_m, q, eta):
+    term1 = (J**2 -L**2)**2
+    term2 = -2*L*xi*(J**2-L**2)
+    term3 = -2*(1-q)/q * (S1**2 - q* S2**2)*L**2
+    term4 = 4*eta * L**2 *xi**2
+    term5 = -2*delta_m * (S1**2 -S2**2)*xi*L 
+    term6 = 2*(1-q)/q * (q*S1**2 - S2**2)*J**2
+    return term1+term2 + term3 + term4 + term5 + term6
+
+#L,S1,S2,J are magnitudes
+def D(L,S1,S2,J,xi,delta_m, q, eta):
+    term1 = (1-q)/q * (S2**2 -q*S1**2)*(J**2 - L**2)**2
+    term2 = delta_m**2/eta * (S1**2 - S2**2)**2 * L**2
+    term3 = 2 * delta_m *L * eta * (S1**2 - S2**2 )*(J**2 - L**2)
+    return term1+term2+term3
+
 ###############################################################################################
 #Formula from PHYSICAL REVIEW D 95, 104004
 def R_m (S_plus, S_minus): return S_plus**2 + S_minus**2
@@ -228,3 +337,38 @@ def Omega_z_5_avg(g0, g2, g3,g4,g5, O_z_5, O_z_3, O_z2, O_z_1, O_z_0):
     return 3*(g0*O_z_5 + g2*O_z_3 + g3*O_z_2 + g4*O_z_1 + g5 * O_z_0)
 
 ###############################################################################################
+#Phi_z_n calculations for eq 66 in PHYSICAL REVIEW D 95, 104004
+def phi_z_0(J, eta, c1,Sav, l1, v):
+    term1 = (J/(eta**4)) * (c1**2/2 - c1* eta**2/ (6*v) - Sav**2 * eta**2/3 - eta**4/(3*v**2))
+    term2 = -c1/(2*eta) * (c1**2/eta**4 - Sav**2/eta**2 )* l1
+    return term1 + term2
+
+def phi_z_1(J, eta, c1, L, Sav, l1):
+    term1 = -J/(2*eta**2) * (c1 + eta*L)
+    term2 = 1/(2*eta**3) * (c1 - eta**2 * Sav**2)*l1
+    return term1+term2
+
+def phi_z_2(J, Sav, c1, eta, l1,l2):
+    return -J + np.sqrt( Sav**2 *l2) - c1/eta * l1
+
+def phi_z_3(J, Sav, c1, eta,l1, l2,v):
+    return J*v - eta*l1 + c1/np.sqrt(Sav**2) * l2
+
+def phi_z_4(J, Sav, c1, eta,l1, l2,v):
+    term1 = J/(2*Sav**2) * v * (c1 + v*Sav**2)
+    term2 = -1/(2*(Sav**2)**(3/2) ) * (c1**2 - eta**2 * Sav**2)*l2
+    return term1 + term2
+
+def phi_z_5(J, Sav, c1, eta,l1, l2,v):
+    term1 = -J*v*(c1**2/(2*Sav**4) - c1*v/(6*(Sav**2)**(3/2)) - v**2/3 - eta**2/(3*Sav**2))
+    term2 = c1/(2*(Sav**2)**(5/2)) * (c1**2 - eta**2 * Sav**2)*l2
+    return term1 + term2
+
+def l1(J, L, c1, eta):
+    return np.log(c1 + J*eta + L*eta)
+
+def l2(J,Sav, c1, v):
+    return np.log(c1 + J * np.sqrt(Sav**2) *v + Sav**2 * v)
+
+
+
