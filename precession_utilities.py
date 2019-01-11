@@ -26,7 +26,7 @@ def xi(m1,m2,S1, S2,L):
     S2 = np.asarray(S2)
     L = np.asarray(L)
     sumL = 0
-    L_hat = np.divide(L,np.sqrt( np.sum(np.asarray( [x^2 for x in L]) )))
+    L_hat = L/np.sqrt( np.sum(np.asarray( [x**2 for x in L]) ))
     q = m2/m1
     return ((1 + q) * np.sum(np.asarray( [S1[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) )+
              ( 1 + 1/q) *np.sum(np.asarray( [S2[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) ))
@@ -127,7 +127,7 @@ def S2_2(A,B,C,D):
     return (-B/3. + ((1 + (0,1)*np.sqrt(3))*(-B**2 + 3*C))/
         (3.*2**0.6666666666666666*(-2*B**3 + 9*B*C - 27*D + 
              3*np.sqrt(3)*np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**
-           0.3333333333333333) - ((1 - (0,1)*np.sqrt(3))*
+           0.3333333333333333) - ((1 - (1j)*np.sqrt(3))*
           (-2*B**3 + 9*B*C - 27*D + 3*np.sqrt(3)*
               np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**0.3333333333333333)/
         (6.*2**0.3333333333333333))
@@ -149,7 +149,14 @@ def S_minus_2(A,B,C,D):
     s2 = S2_2(A,B,C,D)
     s3 = S3_2(A,B,C,D)
     return np.amin([s1,s2,s3])
-
+def calculate_S_roots(A,B,C,D):
+    s1 = S1_2(A,B,C,D)
+    s2 = S2_2(A,B,C,D)
+    s3 = S3_2(A,B,C,D)
+    S_plus = np.sqrt(np.amax([s1,s2,s3]))
+    S_minus = np.sqrt(np.amin([s1,s2,s3]))
+    S3 = [s1,s2,s3].remove(S_plus**2).remove(S_minus**2)[0] 
+    return S_plus, S_minus, S3
 ###############################################################################################
 #a coefficients PHYSICAL REVIEW D 88, 063011
 def a0(eta): return (96/5)*eta
@@ -171,6 +178,33 @@ def a6(eta, beta6):
 
 def a7(eta, beta7): return (-4415/4032 * np.pi + 358675/6048 * np.pi * eta + 91495/1512 * np.pi *eta**2
                             - beta7)
+
+###############################################################################################
+#Defining g parameters:PHYSICAL REVIEW D 95, 104004
+def g0(a0):
+    return 1/a0
+
+def g2(a2,a0):
+    return -a2/a0
+
+def g3(a3,a0):
+    return -a3/a0
+
+def g4(a4,a2,a0):
+    return -(a4-a2**2)/a0
+
+def g5(a5,a3,a2,a0):
+    return -(a5 - 2*a3*a2)/a0
+
+def g6(a6,a4,a3,a2,a0):
+    return -(a6-2*a4*a2-a3**2+a2**2)/a0
+
+def g6_l(a0):
+    b6 = -1712/315
+    return -3*b6/a0
+
+def g7(a7, a5,a4,a3,a2,a0):
+    return -(a7 - 2*a5*a2 - 2*a4*a3+3*a3*a2**2)/a0
 
 ###############################################################################################
 #Betas PHYSICAL REVIEW D 88, 063011
@@ -312,6 +346,8 @@ def Omega_z_1 (a2, ad, xi, hd): return a2 - ad*xi - ad*hd
 
 def Omega_z_2 (ad, hd, xi, cd, fd): return ad*hd*xi + cd - ad*fd + ad*hd**2
 
+def Omega_z_3(ad, fd, cd, hd, xi): return (ad*fd - cd - ad*hd**2)*(xi + hd) + ad*fd*hd
+
 def Omega_z_4 (cd, ad, hd, fd, xi): return (cd+ad*hd**2 - 2 *ad*fd)*(hd*xi + hd**2 -fd) - ad*fd**2
 
 def Omega_z_5 (cd, ad, fd, hd, xi): 
@@ -333,7 +369,7 @@ def Omega_z_3_avg (g0, g2, g3,O_z_3, O_z_1, O_z_0): return 3*(g0*O_z_3 + g2*O_z_
 
 def Omega_z_4_avg (g0,g2,g3,g4, O_z_4, O_z_2,  O_z_1, O_z_0): return 3*(g0*O_z_4 + g2*O_z_2 +g3 * O_z_1
                                                                         + g4*O_z_0)
-def Omega_z_5_avg(g0, g2, g3,g4,g5, O_z_5, O_z_3, O_z2, O_z_1, O_z_0):
+def Omega_z_5_avg(g0, g2, g3,g4,g5, O_z_5, O_z_3, O_z_2, O_z_1, O_z_0):
     return 3*(g0*O_z_5 + g2*O_z_3 + g3*O_z_2 + g4*O_z_1 + g5 * O_z_0)
 
 ###############################################################################################
@@ -370,5 +406,67 @@ def l1(J, L, c1, eta):
 def l2(J,Sav, c1, v):
     return np.log(c1 + J * np.sqrt(Sav**2) *v + Sav**2 * v)
 
+###############################################################################################
+#coefficients for Phi_0 in eq 67 in PHYSICAL REVIEW D 95, 104004
+def psi_dot(A,S_plus,S3):
+    return (A/2)*np.sqrt(S_plus**2 - S3**2)
 
+def a(eta,xi,v):
+    return (1/2) * v**6 * (1 + (3/(2*eta)) * (1-xi*v))
 
+def c0(eta,xi,delta_m,J,S_plus,S_minus,S1,S2,v):
+    term1 = (3/4) * (1-xi*v)*v**2 
+    term2 = eta**3 + 4*eta**3 * xi*v
+    term3 = -2*eta*(J**2 - S_plus**2 + 2*(S1**2 - S2**2)*delta_m)*v**2
+    term4 = -4*eta*xi*(J**2 - S_plus**2) *v**3
+    term5 = (J**2 - S_plus**2)**2 * v**4 /eta
+    return term1*(term2 + term3 + term4 + term5)
+
+def c2(eta,xi,J,S_plus,S_minus,v):
+    term1 = (-3*eta/2) *(S_plus**2 - S_minus**2)*(1-xi*v)*v**4
+    term2 = 1 + 2*xi*v - (J**2 - S_plus**2 ) /eta**2 * v**2
+    return term1*term2
+
+def c4(eta, xi, S_plus, S_minus, v):
+    return (3/(4*eta))*(S_plus**2 - S_minus**2 )**2 * (1-xi*v)*v**6
+
+def d0(J,L, S_plus):
+    return -(J**2 -(L + S_plus)**2)*(J**2 - (L-S_plus)**2)
+
+def d2(J,L,S_plus,S_minus ):
+    return -2*(S_plus**2 - S_minus**2)*(J**2 +L**2 -S_plus**2)
+
+def d4(S_plus,S_minus):
+    return -(S_plus**2 - S_minus**2)**2
+
+def C1(c0,c2,c4,d0,d2,d4):
+    return (-1/2)*(c0/d0 - (c0+c2+c4)/(d0+d2+d4))
+def C2(c0,c2,c4,d0,d2,d4,sd):
+    term1 = c0*(-2*d0*d4+d2**2 +d2*d4)
+    term2 = -c2*d0*(d2 + 2*d4)
+    term3 = 2*d0*(d0+ d2 + d4)*sd
+    term4 = c4*d0*(2*d0 + d2)
+    term5 = 2*d0*(d0+d2+d4)*sd
+    return (term1 + term2)/term3 + term4/term5
+
+def sd(d0,d2,d4):
+    return np.sqrt(d2**2 - 4*d0*d4)
+
+def Cphi(C1, C2):
+    return C1 + C2
+
+def Dphi(C1,C2):
+    return C1-C2
+
+def nc(d0,d2,d4,sd):
+    return 2*(d0 + d2 + d4) / (2*d0 + d2 + sd)
+
+def nd(d0,d2,sd):
+    return (2*d0 + d2 + sd)/(2*d0)
+
+def phi_z_0_0(Cphi,Dphi,nc,nd,psi_dot,psi):
+    term1 = (Cphi/psi_dot * (np.sqrt(nc)/(nc-1) ) *
+            np.arctan( (1-np.sqrt(nc))*np.tan(psi)/(1+np.sqrt(nc)*np.tan(psi)**2)))
+    term2 = (Dphi/psi_dot * (np.sqrt(nd)/(nd-1) ) *
+            np.arctan( (1-np.sqrt(nd)) *np.tan(psi)/(1+ np.sqrt(nd) * np.tan(psi)**2 ) ))
+    return term1 + term2
