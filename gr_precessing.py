@@ -6,6 +6,7 @@ from astropy.coordinates import Distance
 from astropy import units as u
 import astropy.constants as consts
 import precession_utilities as p_util
+import matplotlib.pyplot as plt
 
 
 c = util.c
@@ -14,6 +15,8 @@ s_solm = util.s_solm
 mpc = util.mpc
 
 """Defined by the following papers: arXiv:1809.10113, arXiv:1703.03967, arXiv:1606.03117"""
+#Note: spin1 and spin2 are the chi parameters - DIMENSIONLESS
+#Currently, spin1 and spin2 are defined in the CO-PRECESSING frame, so S1y and S2y MUST cancel - this will change
 class IMRPhenomPv3(gr.IMRPhenomD):
 
     def __init__(self, mass1, mass2,spin1,spin2, collision_time, \
@@ -66,68 +69,91 @@ class IMRPhenomPv3(gr.IMRPhenomD):
         A_D, phi_D, h_D  = super(IMRPhenomPv3,self).calculate_waveform_vector(f)
         h_D_complex =  A_D*np.exp(1j* phi_D)
         
+        #Convert from seconds to units M = 1
+        chirpm = self.chirpm/self.M
+        m1 = self.m1/self.M
+        m2 = self.m2/ self.M
+        delta_m = self.delta_m/self.M
+        S1_vec_0 = self.S1_vec_0/self.M**2
+        S2_vec_0 = self.S2_vec_0/self.M**2
+        S1 = self.S1/self.M**2
+        S2 = self.S2/self.M**2
+        f = f*self.M
+        
+        
         ############################################################################
         #Find initial conditions to populate conserved quantities xi and c1
         f0 = f[0]
-        L0 = p_util.L(self.symmratio, f0, self.M)
-        theta_L_0 = np.arccos((self.S1_vec_0[0]+self.S2_vec_0[0])/L0)
-        print(L0)
+        L0 = p_util.L(self.symmratio, f0, M=1)
+        theta_L_0 = np.arccos((S1_vec_0[0]+S2_vec_0[0])/L0)
         L_vec_0 = p_util.L_vec(L0, theta_L_0)
-        J0 = p_util.J0(L0,self.S1_vec_0,self.S2_vec_0)
-        v0 = p_util.v(f0, self.M)
+        J0 = p_util.J0(L0,S1_vec_0,S2_vec_0)
+        v0 = p_util.v(f0, M=1)
         ############################################################################
 
-        self.xi = p_util.xi(m1 = self.m1, m2 = self.m2, S1=self.S1_vec_0, S2 = self.S2_vec_0, L = L_vec_0)
+        xi = p_util.xi(m1 = m1, m2 = m2, S1=S1_vec_0, S2 = S2_vec_0, L = L_vec_0)
 
         ############################################################################
         #Calculate S_plus_0 and S_minus_0
-        A0 = p_util.A(eta=self.symmratio, xi = self.xi, v = v0)
-        B0 = p_util.B(L=L0,S1=self.S1, S2=self.S2, J=J0, xi = self.xi, q = self.q)
-        C0 = p_util.C(L=L0,S1=self.S1, S2=self.S2, J=J0, xi = self.xi,delta_m=self.delta_m, 
+        A0 = p_util.A(eta=self.symmratio, xi =  xi, v = v0)
+        B0 = p_util.B(L=L0,S1=S1, S2=S2, J=J0, xi =  xi, q = self.q)
+        C0 = p_util.C(L=L0,S1=S1, S2=S2, J=J0, xi =  xi,delta_m=delta_m, 
                         q = self.q, eta = self.symmratio)
-        D0 = p_util.C(L=L0,S1=self.S1, S2=self.S2, J=J0, xi = self.xi,delta_m=self.delta_m, 
+        D0 = p_util.D(L=L0,S1=S1, S2=S2, J=J0, xi =  xi,delta_m=delta_m, 
                         q = self.q, eta = self.symmratio)
-        self.S_plus_0, self.S_minus_0, self.S3_0 = p_util.calculate_S_roots(A0,B0,C0,D0)
-        self.Sav = p_util.Sav(self.S_plus_0,self.S_minus_0)
+        print("coeffs")
+        print(A0,B0,C0,D0)
+        S_plus_0,  S_minus_0,  S3_0 = p_util.calculate_S_roots(A0,B0,C0,D0)
+        Sav = p_util.Sav( S_plus_0, S_minus_0)
+        print("S plus, minus, 3:")
+        print( S_plus_0, S_minus_0,  S3_0)
+        print("Sav:")
+        print( Sav)
         ############################################################################
-        self.c1 = p_util.c1(L0,J0,self.Sav, v0)
+        
+        c1 = p_util.c1(L0,J0, Sav, v0)
     
         ############################################################################
-        #NOTE: sigma4 depends on frequency - needs to be calculated every iteration
-        self.mu = self.m1*self.m2/self.M
-        self.beta3 = p_util.beta3(self.m1,self.m2,self.c1,self.q,self.symmratio,self.xi)
-        self.beta5 = p_util.beta5(self.m1, self.m2, self.c1, self.q, self.symmratio, self.xi)
-        self.beta6 = p_util.beta6(self.m1,self.m2,self.c1,self.qmself.symmratio,self.xi)
-        self.beta7 = p_util.beta7(self.m1,self.m2,self.c1,self.qmself.symmratio,self.xi)
-        self.sigma4 = p_util.sigma4(self.m1, self.m2, self.mu, self.Sav, self.S1, self.S2, self.c1, 
-                                    self.q, self.symmratio,self.xi, self.S_plus, self.S_minus, self.v0)
+        #NOTE: sigma4 depends on frequency - needs to be calculated every iteration - initialized with intital
+        #values just for code structure
+        mu = m1*m2 #In M=1 units
+        beta3 = p_util.beta3( m1, m2, c1,self.q,self.symmratio, xi)
+        beta5 = p_util.beta5( m1,  m2,  c1, self.q, self.symmratio,  xi)
+        beta6 = p_util.beta6( m1, m2, c1,self.q,self.symmratio, xi)
+        beta7 = p_util.beta7( m1, m2, c1,self.q,self.symmratio, xi)
+        sigma4 = p_util.sigma4( m1,  m2,  mu,  Sav,  S1,  S2,  c1, 
+                                   self.q, self.symmratio, xi,  S_plus_0,  S_minus_0, v0)
 
-        self.a0 = p_util.a0(self.symmratio)
-        self.a1 = p_util.a1(self.symmratio) 
-        self.a2 = p_util.a2(self.symmratio, self.xi)
-        self.a3 = p_util.a3(self.beta3)
-        self.a4 = p_util.a4(self.symmratio,self.sigma4)
-        self.a5 = p_util.a5(self.symmratio,self.beta5)
-        self.a6 = p_util.a6(self.symmratio, self.beta6)
-        self.a7 = p_util.a7(self.symmratio,self.beta7)
+        a0 = p_util.a0(self.symmratio)
+        a1 = p_util.a1(self.symmratio) 
+        a2 = p_util.a2(self.symmratio,  xi)
+        a3 = p_util.a3( beta3)
+        a4 = p_util.a4(self.symmratio, sigma4)
+        a5 = p_util.a5(self.symmratio, beta5)
+        a6 = p_util.a6(self.symmratio,  beta6)
+        a7 = p_util.a7(self.symmratio, beta7)
         
-        self.g0 = p_util.g0(a0)
-        self.g2 = p_util.g2(a2,a0)
-        self.g3 = p_util.g3(a3,a0)
-        self.g4 = p_util.g4(a4,a2,a0)
-        self.g5 = p_util.g5(a5,a3,a2,a0)
-        self.g6 = p_util.g6(a6,a4,a3,a2,a0)
-        self.g6_l = p_util.g6_l(a0)
-        self.g7 = p_util.g7(a7,a5,a4,a3,a2,a0)
+        g0 = p_util.g0( a0)
+        g2 = p_util.g2( a2, a0)
+        g3 = p_util.g3( a3, a0)
+        g4 = p_util.g4( a4, a2, a0)
+        g5 = p_util.g5( a5, a3, a2, a0)
+        g6 = p_util.g6( a6, a4, a3, a2, a0)
+        g6_l = p_util.g6_l( a0)
+        g7 = p_util.g7( a7, a5, a4, a3, a2, a0)
         
-        g_vec = [self.g0,self.g2,self.g3,self.g4,self.g5,self.g6,self.g6_l,self.g7]
-        a_vec = [self.a0,self.a1,self.a2,self.a3,self.a4,self.a5,self.a6,self.a7]
-        beta_vec = [self.beta3,self.beta5,self.beta6,self.beta7,self.sigma4]
+        g_vec = [ g0, g2, g3, g4, g5, g6, g6_l, g7]
+        a_vec = [ a0, a1, a2, a3, a4, a5, a6, a7]
+        beta_vec = [ beta3, beta5, beta6, beta7, sigma4]
         ############################################################################
-        self.Delta = p_util.Delta(self.symmratio, self.q, self.delta_m,self.xi,self.S1,self.S2,self.c1)
-        self.psi1 = p_util.psi1(self.xi,self.symmratio,self.c1, self.delta_m)
-        self.psi2 = p_util.psi2(self.symmratio, self.delta_m,self.q,self.Delta,self.S1,self.S2,self.Sav,self.xi,
-                                self.g0,self.g2,self.c1)
+        Delta = p_util.Delta(self.symmratio, self.q,  delta_m, xi, S1, S2, c1)
+        psi1 = p_util.psi1( xi,self.symmratio, c1,  delta_m)
+        psi2 = p_util.psi2(self.symmratio,  delta_m, self.q, Delta, S1, S2, Sav, xi,
+                                 g0, g2, c1)
+        phi_z_vec = []
+        for x in f:
+            phi_z_vec.append(self.phi_z( x, chirpm, self.symmratio, S1,S2,xi, 
+                            Sav, c1,psi1,psi2,g_vec))
         return A_D
         
     def phi_z(self, f, chirpm, symmratio, S1,S2,xi, Sav, c1,psi1,psi2,g_vec):
@@ -136,7 +162,7 @@ class IMRPhenomPv3(gr.IMRPhenomD):
         g3 = g_vec[2]
         g4 = g_vec[3]
         g5 = g_vec[4]
-        M = self.assign_totalmass(chirpm, symmratio)
+        #M = self.assign_totalmass(chirpm, symmratio)
         #S1 = self.assign_spin1(chi_s,chi_a)
         #S2 = self.assign_spin2(chi_s,chi_a)
         delta_m = self.assign_delta_m(chirpm,symmratio)
@@ -144,15 +170,11 @@ class IMRPhenomPv3(gr.IMRPhenomD):
         m2 = self.assign_mass2(chirpm,symmratio)
         q = m2/m1
 
-        v = p_util.v(f=f, M=M)
-        L =p_util.L(eta=symmratio, f=f, M = M) 
+        v = p_util.v(f=f, M=1)
+        L =p_util.L(eta=symmratio, f=f, M = 1) 
         J = p_util.J(L,Sav,c1,v)
-        J_vec = np.asarray([0,0,J])
+        #J_vec = np.asarray([0,0,J])
 
-        theta_L = p_util.theta_L(J2 = J**2, L2 = L**2, S2 = S**2)
-        L_vec = p_util.L_vec(L, theta_L)
-
-        
         A = p_util.A(eta=symmratio, xi = xi, v = v)
         B = p_util.B(L=L,S1=S1, S2=S2, J=J, xi = xi, q = q)
         C = p_util.C(L=L,S1=S1, S2=S2, J=J, xi = xi,delta_m=delta_m, q = q, eta = symmratio)
@@ -162,9 +184,18 @@ class IMRPhenomPv3(gr.IMRPhenomD):
         #S_minus = np.sqrt( p_util.S_minus_2(A,B,C,D))
         S_plus, S_minus, S3 = p_util.calculate_S_roots(A,B,C,D)
         
+        #psi0 and integration constant?? Setting to 0
+        psi0 = 0
         psi = p_util.psi(psi0,psi1,psi2,g0,delta_m,v)
+        m = p_util.m(S_plus,S_minus,S3)
 
-        S = np.sqrt(S2(S_plus,S_minus,psi, m))
+        S = np.sqrt(p_util.S2(S_plus,S_minus,psi, m))
+    
+
+        theta_L = p_util.theta_L(J2 = J**2, L2 = L**2, S2 = S**2)
+        L_vec = p_util.L_vec(L, theta_L)
+
+        
 
         #S_plus_0 = self.assign_S_plus_0()
         #S_minus_0 = self.assign_S_minus_0()
@@ -179,7 +210,7 @@ class IMRPhenomPv3(gr.IMRPhenomD):
         
         #Spin vectors in non-inertial, co-precessing frame (about J_vec angle phi_z)
         S1_vec = np.matmul(rotmat, s1prime_vec)
-        S2_vec = np.subtract( np.subtract(J_vec,L_vec,),S1_vec)
+        #S2_vec = np.subtract( np.subtract(J_vec,L_vec,),S1_vec)
         
 
         ##################################################################
@@ -257,12 +288,16 @@ class IMRPhenomPv3(gr.IMRPhenomD):
 ######################################################################################################
 
 if __name__=='__main__':
-    m1 = 10*s_solm
-    m2 = 5*s_solm
-    spin1 = m1**2 *np.asarray([.2,.1,.2])
-    spin2 = m2**2 *np.asarray([.6,.1,.1])
+    m1 = 6*s_solm
+    m2 = 4*s_solm
+    spin1 =  np.asarray([-.2,.1,.2])
+    spin2 = np.asarray([-.3,-.1,.1])
     dl = 100*mpc
     model = IMRPhenomPv3(mass1=m1,mass2=m2, spin1=spin1,spin2=spin2,collision_time=0,collision_phase=0, Luminosity_Distance=dl, NSflag = False, N_detectors=1)
     frequencies = np.arange(1,1000,1)
-    model.calculate_waveform_vector(frequencies)
+    waveform = model.calculate_waveform_vector(frequencies)
+    plt.loglog(frequencies,waveform.real)
+    plt.show()
+    plt.close()
+    
     #model.phi_z(10., model.chirpm, model.symmratio, model.chi_s, model.chi_a)

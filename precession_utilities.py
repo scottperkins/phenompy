@@ -8,7 +8,7 @@ from scipy.special import ellipj
 #Foundational quantities PHYSICAL REVIEW D 95, 104004
 #Defining c1 from the initial parameters
 def c1(L0,J0,Sav, v0):
-    return (J0**2 -L**2 - Sav**2)*(v0/2)
+    return (J0**2 -L0**2 - Sav**2)*(v0/2)
 
 #All values are the initial values from the input parameters
 #Returns the initial magnitude of total angular momentum
@@ -26,10 +26,12 @@ def xi(m1,m2,S1, S2,L):
     S2 = np.asarray(S2)
     L = np.asarray(L)
     sumL = 0
-    L_hat = L/np.sqrt( np.sum(np.asarray( [x**2 for x in L]) ))
+    L_mag = np.sqrt( np.sum(np.asarray( [x**2 for x in L]) ))
+    L_hat = L/L_mag
     q = m2/m1
     return ((1 + q) * np.sum(np.asarray( [S1[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) )+
              ( 1 + 1/q) *np.sum(np.asarray( [S2[i] * L_hat[i] for i in np.arange( len(L_hat) )] ) ))
+
 
 #J2, L2, and S2 are  magnitudes
 def theta_L(J2, L2, S2):
@@ -124,21 +126,45 @@ def S1_2(A,B,C,D):
                 np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**0.3333333333333333/
             (3.*2**0.3333333333333333))
 def S2_2(A,B,C,D):
-    return (-B/3. + ((1 + (0,1)*np.sqrt(3))*(-B**2 + 3*C))/
+    return (-B/3. + ((1 + 1j*np.sqrt(3))*(-B**2 + 3*C))/
         (3.*2**0.6666666666666666*(-2*B**3 + 9*B*C - 27*D + 
              3*np.sqrt(3)*np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**
-           0.3333333333333333) - ((1 - (1j)*np.sqrt(3))*
+           0.3333333333333333) - ((1 - (1j)*np.sqrt(3.))*
           (-2*B**3 + 9*B*C - 27*D + 3*np.sqrt(3)*
               np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**0.3333333333333333)/
         (6.*2**0.3333333333333333))
 def S3_2(A,B,C,D):
-    return (-B/3. + ((1 - (0,1)*np.sqrt(3))*(-B**2 + 3*C))/
+    return (-B/3. + ((1 - 1j*np.sqrt(3))*(-B**2 + 3*C))/
         (3.*2**0.6666666666666666*(-2*B**3 + 9*B*C - 27*D + 
              3*np.sqrt(3)*np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**
-           0.3333333333333333) - ((1 + (0,1)*np.sqrt(3))*
+           0.3333333333333333) - ((1 + (1j)*np.sqrt(3))*
           (-2*B**3 + 9*B*C - 27*D + 3*np.sqrt(3)*
               np.sqrt(-(B**2*C**2) + 4*C**3 + 4*B**3*D - 18*B*C*D + 27*D**2))**0.3333333333333333)/
         (6.*2**0.3333333333333333))
+#def S1_2(A,B,C,D):
+#    return (-2*B + (2*np.power(2,0.3333333333333333)*(np.power(B,2) - 3*C))/
+#      np.power(-2*np.power(B,3) + 9*B*C + 3*(-9*D + 
+#           np.sqrt(-3*(np.power(B,2) - 4*C)*np.power(C,2) + 6*B*(2*np.power(B,2) - 9*C)*D + 81*np.power(D,2))),
+#       0.3333333333333333) + np.power(2,0.6666666666666666)*
+#      np.power(-2*np.power(B,3) + 9*B*C + 3*(-9*D + 
+#           np.sqrt(-3*(np.power(B,2) - 4*C)*np.power(C,2) + 6*B*(2*np.power(B,2) - 9*C)*D + 81*np.power(D,2))),
+#       0.3333333333333333))/6.
+#def S2_2(A,B,C,D):
+#    return (-4*B - (4*np.power(-2,0.3333333333333333)*(np.power(B,2) - 3*C))/
+#      np.power(-2*np.power(B,3) + 9*B*C + 3*(-9*D + 
+#           np.sqrt(-3*(np.power(B,2) - 4*C)*np.power(C,2) + 6*B*(2*np.power(B,2) - 9*C)*D + 81*np.power(D,2))),
+#       0.3333333333333333) + 2*np.power(-2,0.6666666666666666)*
+#      np.power(-2*np.power(B,3) + 9*B*C + 3*(-9*D + 
+#           np.sqrt(-3*(np.power(B,2)  4*C)*np.power(C,2) + 6*B*(2*np.power(B,2) - 9*C)*D + 81*np.power(D,2))),
+#       0.3333333333333333))/12.
+#def S3_2(A,B,C,D):
+#    return (-B/3. + (np.power(-1,0.6666666666666666)*np.power(2,0.3333333333333333)*(np.power(B,2) - 3*C))/
+#    (3.*np.power(-2*np.power(B,3) + 9*B*C + 3*(-9*D + 
+#           np.sqrt(-3*(np.power(B,2) - 4*C)*np.power(C,2) + 6*B*(2*np.power(B,2) - 9*C)*D + 81*np.power(D,2))),
+#       0.3333333333333333)) - (np.power(-0.5,0.3333333333333333)*
+#      np.power(-2*np.power(B,3) + 9*B*C + 3*(-9*D + 
+#           np.sqrt(-3*(np.power(B,2)- 4*C)*np.power(C,2) + 6*B*(2*np.power(B,2) - 9*C)*D + 81*np.power(D,2))),
+#       0.3333333333333333))/3.)
 def S_plus_2(A,B,C,D):
     s1 = S1_2(A,B,C,D)
     s2 = S2_2(A,B,C,D)
@@ -153,9 +179,18 @@ def calculate_S_roots(A,B,C,D):
     s1 = S1_2(A,B,C,D)
     s2 = S2_2(A,B,C,D)
     s3 = S3_2(A,B,C,D)
-    S_plus = np.sqrt(np.amax([s1,s2,s3]))
-    S_minus = np.sqrt(np.amin([s1,s2,s3]))
-    S3 = [s1,s2,s3].remove(S_plus**2).remove(S_minus**2)[0] 
+    roots = [s1,s2,s3]
+    print("Roots")
+    print(roots)
+    S_plus2 = np.amax(roots)
+    S_plus = np.sqrt(S_plus2)
+    S_minus2 = np.amin(roots)
+    S_minus = np.sqrt(S_minus2)
+    #print(roots)
+    #print(S_plus2,S_minus2)
+    roots.remove(S_plus2)
+    roots.remove(S_minus2)
+    S3 = np.sqrt(roots[0])
     return S_plus, S_minus, S3
 ###############################################################################################
 #a coefficients PHYSICAL REVIEW D 88, 063011
@@ -173,7 +208,7 @@ def a5(eta, beta5): return -4159/672 * np.pi - 189/8 * np.pi *eta - beta5
 
 def a6(eta, beta6): 
     return ( 16447322263/139708800 + 16/3 * np.pi**2 - 856/105 * np.log(16) - 
-            1712/105 * utilities.gammaE - beta6 + eta*(451/48 * np.pi**2 - 56198689/217728) +
+            1712/105 * util.gamma_E - beta6 + eta*(451/48 * np.pi**2 - 56198689/217728) +
             eta**2 * 541/896 - eta**3 * 5605/2592)
 
 def a7(eta, beta7): return (-4415/4032 * np.pi + 358675/6048 * np.pi * eta + 91495/1512 * np.pi *eta**2
@@ -316,7 +351,7 @@ def C(L,S1,S2,J,xi,delta_m, q, eta):
 def D(L,S1,S2,J,xi,delta_m, q, eta):
     term1 = (1-q)/q * (S2**2 -q*S1**2)*(J**2 - L**2)**2
     term2 = delta_m**2/eta * (S1**2 - S2**2)**2 * L**2
-    term3 = 2 * delta_m *L * eta * (S1**2 - S2**2 )*(J**2 - L**2)
+    term3 = 2 * delta_m *L * xi * (S1**2 - S2**2 )*(J**2 - L**2)
     return term1+term2+term3
 
 ###############################################################################################
