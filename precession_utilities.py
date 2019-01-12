@@ -4,6 +4,14 @@ from scipy.special import ellipj
 
 """A variety of utilities for the construction of the precessing model IMRPhenomPv3:"""
 
+def wignerD(l,m,m_prime,beta):
+    k_sum = 0
+    k = 0
+    #factorial arguments - must be positive in sum
+    check1 = l+m -k
+    check2 = l-m-k
+    check3 = m_prime-m+k
+        
 ###############################################################################################
 #Foundational quantities PHYSICAL REVIEW D 95, 104004
 #Defining c1 from the initial parameters

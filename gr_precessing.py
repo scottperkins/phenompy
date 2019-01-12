@@ -14,6 +14,50 @@ G = util.G
 s_solm = util.s_solm
 mpc = util.mpc
 
+"""PhenomPv2 - specify three spin components at a reference frequency fref"""
+class IMRPhenomPv2(gr.IMRPhenomD):
+
+    def __init__(self, mass1, mass2,spin1,spin2, collision_time, \
+                    collision_phase,Luminosity_Distance,fref,cosmo_model = cosmology.Planck15,
+                    NSflag = False,N_detectors=1):
+
+        spin1_mag = np.sqrt(np.sum(np.asarray([x**2 for x in spin1])))
+        spin2_mag = np.sqrt(np.sum(np.asarray([x**2 for x in spin2])))
+        self.S1_vec_0 = spin1*m1**2
+        self.S2_vec_0 = spin2*m2**2
+        
+        #probably need to feed the projections of the spin to PhenomD, not the magnitudes..
+        super(IMRPhenomPv2,self).__init__( mass1=mass1, mass2=mass2,spin1=spin1[2],spin2=spin2[2],
+                                             collision_time=collision_time, 
+                                                collision_phase=collision_phase,
+                                                Luminosity_Distance=Luminosity_Distance, 
+                                                cosmo_model=cosmology.Planck15, NSflag=False,
+                                                N_detectors=1)
+        self.S1 = spin1_mag*m1**2#self.calculate_spin1(self.chi_s, self.chi_a)
+        self.S2 = spin2_mag*m2**2#self.calculate_spin2(self.chi_s, self.chi_a)
+        
+        self.delta_m = self.calculate_delta_m(self.chirpm,self.symmratio)
+        self.q = self.m2/self.m1
+    
+    def alpha(self,freq):
+        return 0
+
+    def beta(self,freq):
+        return 0
+
+    def epsilon(self,freq):
+        return 0
+
+    def calculate_waveform_vector(self,frequencies):
+        A_D, phi_D, h_D  = super(IMRPhenomPv2,self).calculate_waveform_vector(f)
+        h_D_complex =  A_D*np.exp(1j* phi_D)
+        
+        alpha = self.alpha(frequncies)
+        beta = self.beta(frequencies)
+        epsilon = self.epsilon(frequencies)
+        
+     
+        
 """Defined by the following papers: arXiv:1809.10113, arXiv:1703.03967, arXiv:1606.03117"""
 #Note: spin1 and spin2 are the chi parameters - DIMENSIONLESS
 #Currently, spin1 and spin2 are defined in the CO-PRECESSING frame, so S1y and S2y MUST cancel - this will change
