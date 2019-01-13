@@ -1,17 +1,55 @@
 import autograd.numpy as np
+from math import factorial
 import utilities as util
 from scipy.special import ellipj
 
-"""A variety of utilities for the construction of the precessing model IMRPhenomPv3:"""
-
+###############################################################################################
+"""A variety of utilities for the construction of the precessing model IMRPhenomPv2:"""
+###############################################################################################
+#wigner d as defined by the internal LIGO document
+#This is probably slower than it needs to be - accurate but can be sped up
 def wignerD(l,m,m_prime,beta):
     k_sum = 0
     k = 0
+    constant_factor = np.sqrt( factorial(l+m) * factorial(l-m) *
+                                factorial(l+m_prime) * factorial(l-m_prime) )
+    
     #factorial arguments - must be positive in sum
     check1 = l+m -k
     check2 = l-m-k
     check3 = m_prime-m+k
+    d = 0
+    while(k<l):
+        if check1 >= 0 and check2 >= 0 and check3 >= 0:
+            d+= ((-1)**(k+m_prime-m) / (factorial(l+m-k) * factorial(l - m - k) *
+                    factorial(k) * factorial(m_prime - m +k) ) * (np.cos(beta/2) )**(2*l-2*k - m_prime + m) *
+                    (np.sin(beta/2) )**(2*k + m_prime - m))
+        k+=1
+        check1 = l+m -k
+        check2 = l-m-k
+        check3 = m_prime-m+k
+    d = d*constant_factor
+    return d
         
+#assuming m1 >m2 and s1,s2 are 3D vectors in the orthonormal triad system where L_hat =z_hat, 
+#separation distance = x_hat
+def chi_p(s1,s2,m1,m2):
+    A_1 = 2 + 3*m2/m1    
+    A_2 = 2+ 3*m1/m2
+    chi_p_1 = (s1[0]**2+s1[1]**2)**(1/2)/m1**2
+    chi_p_2 = (s2[0]**2+s2[1]**2)**(1/2)/m2**2
+    return max(A_1*m1**2*abs(chi_p_1), A_2*m2**2*abs(chi_p_2))/(A_1*m1**2)
+
+#assuming m1 >m2 and s1,s2 are 3D vectors in the orthonormal triad system where L_hat =z_hat, 
+#separation distance = x_hat
+def chi_l(s1,s2):
+    return (s1[2]+s2[2])/m1**2
+
+###############################################################################################
+###############################################################################################
+
+###############################################################################################
+"""A variety of utilities for the construction of the precessing model IMRPhenomPv3:"""
 ###############################################################################################
 #Foundational quantities PHYSICAL REVIEW D 95, 104004
 #Defining c1 from the initial parameters
