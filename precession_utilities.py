@@ -45,6 +45,65 @@ def chi_p(s1,s2,m1,m2):
 def chi_l(s1,s2):
     return (s1[2]+s2[2])/m1**2
 
+#omega = np.pi * f
+def alpha(omega, q, chi2l,chi2):
+    return ((-0.18229166666666666 - (5*(1 + q)*(1/(1 + q) - q/(1 + q)))/(64.*q))/omega + 
+   ((-35*chi2l*q)/128. - (15*chi2l*(1 + q)*(1/(1 + q) - q/(1 + q)))/128.)/np.power(omega,0.6666666666666666) + 
+   (-1.7952473958333333 - (35*np.power(chi2,2)*np.power(q,2))/128. - (515*q)/(384.*np.power(1 + q,2)) - 
+      (175*(1/(1 + q) - q/(1 + q)))/(256.*(1 + q)) - (4555*(1 + q)*(1/(1 + q) - q/(1 + q)))/(7168.*q) - 
+      (15*np.power(chi2,2)*q*(1 + q)*(1/(1 + q) - q/(1 + q)))/128. - (15*np.power(1/(1 + q) - q/(1 + q),2))/(256.*q)
+      )/np.power(omega,0.3333333333333333) + (4.318908476114694 - (35*chi2l*np.pi*q)/16. + 
+      (475*np.power(chi2,2)*np.power(q,2))/6144. - (35*np.power(chi2,4)*np.power(q,4))/512. + 
+      (35*np.power(chi2,2)*np.power(chi2l,2)*np.power(q,4))/128. + (955*np.power(q,2))/(576.*np.power(1 + q,4)) + 
+      (39695*q)/(86016.*np.power(1 + q,2)) + (575*np.power(chi2,2)*np.power(q,3))/(1536.*np.power(1 + q,2)) + 
+      (1645*np.power(chi2l,2)*np.power(q,3))/(192.*np.power(1 + q,2)) + 
+      (2725*q*(1/(1 + q) - q/(1 + q)))/(3072.*np.power(1 + q,3)) - 
+      (265*(1/(1 + q) - q/(1 + q)))/(14336.*(1 + q)) + 
+      (145*np.power(chi2,2)*np.power(q,2)*(1/(1 + q) - q/(1 + q)))/(512.*(1 + q)) + 
+      (1815*np.power(chi2l,2)*np.power(q,2)*(1/(1 + q) - q/(1 + q)))/(256.*(1 + q)) - 
+      (15*chi2l*np.pi*(1 + q)*(1/(1 + q) - q/(1 + q)))/16. + 
+      (27895885*(1 + q)*(1/(1 + q) - q/(1 + q)))/(2.1676032e7*q) - 
+      (485*np.power(chi2,2)*q*(1 + q)*(1/(1 + q) - q/(1 + q)))/14336. - 
+      (15*np.power(chi2,4)*np.power(q,3)*(1 + q)*(1/(1 + q) - q/(1 + q)))/512. + 
+      (15*np.power(chi2,2)*np.power(chi2l,2)*np.power(q,3)*(1 + q)*(1/(1 + q) - q/(1 + q)))/128. + 
+      (1615*np.power(1/(1 + q) - q/(1 + q),2))/(28672.*q) + 
+      (15*np.power(chi2,2)*q*np.power(1/(1 + q) - q/(1 + q),2))/256. + 
+      (375*np.power(chi2l,2)*q*np.power(1/(1 + q) - q/(1 + q),2))/256. + 
+      (35*np.power(1/(1 + q) - q/(1 + q),2))/(256.*np.power(1 + q,2)) + 
+      (15*np.power(1/(1 + q) - q/(1 + q),3))/(1024.*q*(1 + q)))*np.power(omega,0.3333333333333333) - 
+   (35*np.pi*np.log(omega))/48. + (2995*chi2l*q*np.log(omega))/9216. - (35*np.power(chi2,2)*chi2l*np.power(q,3)*np.log(omega))/384. + 
+   (2545*chi2l*np.power(q,2)*np.log(omega))/(1152.*np.power(1 + q,2)) + 
+   (5*chi2l*q*(1/(1 + q) - q/(1 + q))*np.log(omega))/(3.*(1 + q)) + 
+   (2035*chi2l*(1 + q)*(1/(1 + q) - q/(1 + q))*np.log(omega))/21504. - 
+   (5*np.pi*(1 + q)*(1/(1 + q) - q/(1 + q))*np.log(omega))/(16.*q) - 
+   (5*np.power(chi2,2)*chi2l*np.power(q,2)*(1 + q)*(1/(1 + q) - q/(1 + q))*np.log(omega))/128. + 
+   (5*chi2l*np.power(1/(1 + q) - q/(1 + q),2)*np.log(omega))/16.)
+
+def beta(omega):
+    return np.pi/2
+#omega = np.pi * f
+def epsilon(omega,q,chi2l,chi2):
+    return (((-35*chi2l*q)/128. - (15*chi2l*(1 + q)*(1/(1 + q) - q/(1 + q)))/128.)/np.power(omega,0.6666666666666666) + 
+   (-0.18229166666666666 - (5*(1 + q)*(1/(1 + q) - q/(1 + q)))/(64.*q))/omega + 
+   (-1.7952473958333333 - (515*q)/(384.*np.power(1 + q,2)) - (175*(1/(1 + q) - q/(1 + q)))/(256.*(1 + q)) - 
+      (4555*(1 + q)*(1/(1 + q) - q/(1 + q)))/(7168.*q) - (15*np.power(1/(1 + q) - q/(1 + q),2))/(256.*q))/
+    np.power(omega,0.3333333333333333) + np.power(omega,0.3333333333333333)*
+    (4.318908476114694 - (35*chi2l*np.pi*q)/16. + (955*np.power(q,2))/(576.*np.power(1 + q,4)) + 
+      (39695*q)/(86016.*np.power(1 + q,2)) + (1645*np.power(chi2l,2)*np.power(q,3))/(192.*np.power(1 + q,2)) + 
+      (2725*q*(1/(1 + q) - q/(1 + q)))/(3072.*np.power(1 + q,3)) - 
+      (265*(1/(1 + q) - q/(1 + q)))/(14336.*(1 + q)) + 
+      (1815*np.power(chi2l,2)*np.power(q,2)*(1/(1 + q) - q/(1 + q)))/(256.*(1 + q)) - 
+      (15*chi2l*np.pi*(1 + q)*(1/(1 + q) - q/(1 + q)))/16. + 
+      (27895885*(1 + q)*(1/(1 + q) - q/(1 + q)))/(2.1676032e7*q) + 
+      (1615*np.power(1/(1 + q) - q/(1 + q),2))/(28672.*q) + 
+      (375*np.power(chi2l,2)*q*np.power(1/(1 + q) - q/(1 + q),2))/256. + 
+      (35*np.power(1/(1 + q) - q/(1 + q),2))/(256.*np.power(1 + q,2)) + 
+      (15*np.power(1/(1 + q) - q/(1 + q),3))/(1024.*q*(1 + q))) - (35*np.pi*np.log(omega))/48. + 
+   (2995*chi2l*q*np.log(omega))/9216. + (2545*chi2l*np.power(q,2)*np.log(omega))/(1152.*np.power(1 + q,2)) + 
+   (5*chi2l*q*(1/(1 + q) - q/(1 + q))*np.log(omega))/(3.*(1 + q)) + 
+   (2035*chi2l*(1 + q)*(1/(1 + q) - q/(1 + q))*np.log(omega))/21504. - 
+   (5*np.pi*(1 + q)*(1/(1 + q) - q/(1 + q))*np.log(omega))/(16.*q) + 
+   (5*chi2l*np.power(1/(1 + q) - q/(1 + q),2)*np.log(omega))/16.)
 ###############################################################################################
 ###############################################################################################
 

@@ -36,6 +36,9 @@ class IMRPhenomPv2(gr.IMRPhenomD):
         self.S1 = spin1_mag*m1**2#self.calculate_spin1(self.chi_s, self.chi_a)
         self.S2 = spin2_mag*m2**2#self.calculate_spin2(self.chi_s, self.chi_a)
         
+        self.chi2l = spin2[2]
+        self.chi2 = spin2_mag
+        
         self.delta_m = self.calculate_delta_m(self.chirpm,self.symmratio)
         self.q = self.m2/self.m1
     
@@ -55,22 +58,16 @@ class IMRPhenomPv2(gr.IMRPhenomD):
         return m1-m2
     def assign_delta_m(self,chirpm,symmratio):
         return self.delta_m
-    def alpha(self,freq):
-        return 0
-
-    def beta(self,freq):
-        return 0
-
-    def epsilon(self,freq):
-        return 0
 
     def calculate_waveform_vector(self,frequencies):
         A_D, phi_D, h_D  = super(IMRPhenomPv2,self).calculate_waveform_vector(frequencies)
         h_D_complex =  A_D*np.exp(-1j* phi_D)
         
-        alpha = self.alpha(frequencies)
-        beta = self.beta(frequencies)
-        epsilon = self.epsilon(frequencies)
+        alpha = p_util.alpha(np.pi*frequencies,self.q,self.chi2l,self.chi2)
+        beta = p_util.beta(frequencies)
+        epsilon = p_util.epsilon(np.pi*frequencies,self.q,self.chi2l,self.chi2)
+        
+        
         
         #Assuming the formula in the LIGO internal is wrong... eq(12)
         #m= +2 or -2 are the same, with a minus sign due to wignerD
@@ -78,7 +75,7 @@ class IMRPhenomPv2(gr.IMRPhenomD):
         waveform_plus1 = p_util.wignerD(2,2,1,-beta) * np.exp(1j*(-2*epsilon - 1*alpha)) * h_D_complex
         waveform_0 = p_util.wignerD(2,2,0,-beta) * np.exp(1j*(-2*epsilon )) * h_D_complex
         
-        print(waveform_plus2,waveform_plus1,waveform_0)
+        #print(waveform_plus2,waveform_plus1,waveform_0)
 
         waveform_minus2 = waveform_plus2
         waveform_minus1 = waveform_plus1
@@ -363,18 +360,24 @@ class IMRPhenomPv3(gr.IMRPhenomD):
 if __name__=='__main__':
     m1 = 6*s_solm
     m2 = 4*s_solm
-    spin1 =  np.asarray([-.2,.1,.2])
-    spin2 = np.asarray([-.3,-.1,.1])
+    #spin1 =  np.asarray([-.2,.1,.2])
+    #spin2 = np.asarray([-.3,-.1,.1])
+    spin1 =  np.asarray([0,0,.2])
+    spin2 = np.asarray([0,0,.1])
     dl = 100*mpc
     model = IMRPhenomPv2(mass1=m1,mass2=m2, spin1=spin1,spin2=spin2,collision_time=0,collision_phase=0, 
             Luminosity_Distance=dl, NSflag = False, N_detectors=1,fref=10)
-    frequencies = np.arange(1,1000,100)
+    frequencies = np.arange(10,200,.01)
     waveform = model.calculate_waveform_vector(frequencies)
     model2 = gr.IMRPhenomD(mass1=m1,mass2=m2, spin1=spin1[2],spin2=spin2[2],collision_time=0,collision_phase=0, 
             Luminosity_Distance=dl, NSflag = False, N_detectors=1)
     a,p , waveform2 = model2.calculate_waveform_vector(frequencies)
-    plt.loglog(frequencies,waveform.real)
-    plt.loglog(frequencies,waveform2.real)
+    waveform2 = a*np.exp(1j*p)
+    #plt.loglog(frequencies,waveform.real,label="Pv2")
+    #plt.loglog(frequencies,waveform2.real,label='D')
+    plt.plot(frequencies,waveform.real,label="Pv2")
+    plt.plot(frequencies,waveform2.real,label='D')
+    plt.legend()
     plt.show()
     plt.close()
     
