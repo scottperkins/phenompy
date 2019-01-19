@@ -23,6 +23,7 @@ from scipy.interpolate import interp1d
 from phenompy import utilities
 from phenompy import noise_utilities
 import io
+from time import time
 
 c = utilities.c
 G = utilities.G
@@ -102,12 +103,12 @@ class IMRPhenomD():
         self.pn_phase = np.zeros(8)
         for i in [0,1,2,3,4,7]:
             self.pn_phase[i] = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
-
+        #self.pn_phase = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,[0,1,2,3,4,7])
         """Numerical Fit Parameters"""
         self.parameters =[]
         for i in np.arange(len(Lambda)):
             self.parameters.append(self.calculate_parameter(self.chirpm,self.symmratio,self.chi_a,self.chi_s,i))
-
+        #self.parameters=self.calculate_parameter(self.chirpm,self.symmratio,self.chi_a,self.chi_s,np.arange(len(Lambda)))
         """Post Newtonian Amplitude"""
         self.pn_amp = np.zeros(7)
         for i in np.arange(7):
@@ -150,8 +151,9 @@ class IMRPhenomD():
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
-        ins_grad = egrad(self.phi_ins,0)
-        return (1/M)*ins_grad(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)*symmratio\
+        #ins_grad = egrad(self.phi_ins,0)(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+        ins_grad = self.Dphi_ins(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+        return (1/M)*ins_grad*symmratio\
          - (beta2*(1/(M*f1)) + beta3*(M*f1)**(-4))
 
     def phase_cont_alpha1(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1):
@@ -163,8 +165,10 @@ class IMRPhenomD():
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         f2 = fRD*0.5
+        #phi_mr_deriv = egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
+        phi_mr_deriv = self.Dphi_mr(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
         return ((1/M)*egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3)*symmratio -
-            symmratio/M * egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))
+            symmratio/M *phi_mr_deriv )
             #(alpha2*(1/(M*f2)**2) + alpha3*(M*f2)**(-1/4) + alpha4*(1/(fdamp+(f2-alpha5*fRD)**2/(fdamp)))/M))
 
     def phase_cont_beta0(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1):
@@ -191,6 +195,7 @@ class IMRPhenomD():
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         f2 = fRD*0.5
+        
         return (self.phi_int(f2,M,symmratio,beta0,beta1,beta2,beta3) *symmratio -
             symmratio*self.phi_mr(f2,chirpm,symmratio,0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))
          #(alpha1*f2*M -alpha2*(1/(f2*M)) + (4/3)*alpha3*(f2*M)**(3/4) + alpha4*np.arctan((f2-alpha5*fRD)/(fdamp))))
@@ -219,9 +224,11 @@ class IMRPhenomD():
         v1 = self.amp_ins(f1,M,rho0,rho1,rho2,pn_amp)
         v2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,3)
         v3 = self.amp_mr(f3,gamma1,gamma2,gamma3,fRD,fdamp,M)
-        dd1 = egrad(self.amp_ins,0)(f1,M,rho0,rho1,rho2,pn_amp)
-        dd3 = egrad(self.amp_mr,0)(f3,gamma1,gamma2,gamma3,fRD,fdamp,M)
-
+        #dd1 = egrad(self.amp_ins,0)(f1,M,rho0,rho1,rho2,pn_amp)
+        #dd3 = egrad(self.amp_mr,0)(f3,gamma1,gamma2,gamma3,fRD,fdamp,M)
+        dd1 = self.Damp_ins( f1,M,rho0,rho1,rho2,pn_amp)
+        dd3 = self.Damp_mr(f3,gamma1,gamma2,gamma3,fRD,fdamp,M)
+        
         if i == 0: return utilities.calculate_delta_parameter_0(f1,f2,f3,v1,v2,v3,dd1,dd3,M)
 
         elif i ==1: return utilities.calculate_delta_parameter_1(f1,f2,f3,v1,v2,v3,dd1,dd3,M)
@@ -277,6 +284,36 @@ class IMRPhenomD():
         return phiTF2 + (1/symmratio)*(sigma0 + sigma1*M*f + \
         (3/4)*sigma2*(M*f)**(4/3) + (3/5)*sigma3*(M*f)**(5/3) + \
         (1/2)*sigma4*(M*f)**(2))
+
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase):
+        """calculate pn phase - Updates the PN coeff. for a given freq."""
+        M = self.assign_totalmass(chirpm,symmratio)
+        temp5 = utilities.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,5)
+        temp6 = utilities.calculate_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,6)
+        temp7 = utilities.calculate_pn_phase_deriv(chirpm,symmratio,delta,chi_a,chi_s,f,5)
+        temp8 = utilities.calculate_pn_phase_deriv(chirpm,symmratio,delta,chi_a,chi_s,f,6)
+
+        """autograd doesn't handle array assignment very well - need to re-instantiate array"""
+        phasepn = [pn_phase[0],pn_phase[1],pn_phase[2],pn_phase[3],pn_phase[4],temp5,temp6,pn_phase[7]]
+        pnsum = 0
+        for i in np.arange(len(self.pn_phase)):
+            pnsum += phasepn[i]* (np.pi * M*f)**(i/3)
+        phiTF2 = 2*np.pi  * tc  + \
+        3/(128*symmratio)*(np.pi *M )**(-5/3)*pnsum*(f)**(-5/3-1)*(-5/3)
+
+        pnsumderiv = 0
+        for i in np.arange(len(self.pn_phase)):
+            pnsumderiv += phasepn[i]* (np.pi * M)**(i/3)*(f)**(i/3-1)*(i/3)
+        pnsumderiv += temp7*(np.pi*M*f)**(5/3)+ temp8*(np.pi*M*f)**(6/3)
+
+        phiTF2 += pnsumderiv*(3/(128*symmratio)*(np.pi *M*f )**(-5/3))
+        """Calculates the full freq. with pn terms and and NR terms
+        - sigma0  and sigma1 are an overall phase factor and derivative factor and are arbitrary (absorbed into phic and tc)"""
+        sigma0 = 0
+        sigma1 =0
+        return phiTF2 + (1/symmratio)*( sigma1*M + \
+        sigma2*(M)**(4/3)*(f)**(1/3) + sigma3*(M)**(5/3)*f**(2/3) + \
+        sigma4*(M)**(2)*f)
     """Amplitude of inspiral"""
     def amp_ins(self,f,M,rho0,rho1,rho2,pn_amp):
         """Calculate PN Amplitude"""
@@ -290,6 +327,21 @@ class IMRPhenomD():
         amp_nr = 0
         for i in np.arange(3):
             amp_nr = amp_nr + parameters[i] * (M*f)**((7+i)/3)
+
+        """full amplitude, including NR parameters:"""
+        return (amp_pn + amp_nr)
+    def Damp_ins(self,f,M,rho0,rho1,rho2,pn_amp):
+        """Calculate PN Amplitude"""
+        amp_pn = 0
+        for i in np.arange(len(pn_amp)):
+            amp_pn = amp_pn + pn_amp[i]*(np.pi*M)**(i/3)*(f)**((i/3)-1)*(i/3)
+
+        """NR corrections:
+        exponential is (7+i) instead of (6+i) because loop var. {0,1,2}"""
+        parameters = [rho0,rho1,rho2]
+        amp_nr = 0
+        for i in np.arange(3):
+            amp_nr = amp_nr + parameters[i] * (M)**((7+i)/3)*(f)**( ((7+i)/3) -1)*((7+i)/3)
 
         """full amplitude, including NR parameters:"""
         return (amp_pn + amp_nr)
@@ -307,12 +359,21 @@ class IMRPhenomD():
         M = self.assign_totalmass(chirpm,symmratio)
         return (1/symmratio)*(alpha0 +alpha1*(M*f) -alpha2*(1/(M*f)) + (4/3)*alpha3*(M*f)**(3/4) + \
         alpha4*np.arctan((f-alpha5*fRD)/fdamp))#self.private_arctan(f,alpha5,fRD,fdamp))
+    def Dphi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp):
+        M = self.assign_totalmass(chirpm,symmratio)
+        return (alpha4/(fdamp*(1 + (f - alpha5*fRD)**2/fdamp**2)) + alpha2/(f**2*M) + 
+         M*(alpha1 + alpha3/(f*M)**0.25))/symmratio    
     """Amplitude of Merger-Ringdown"""
     def amp_mr(self,f,gamma1,gamma2,gamma3,fRD,fdamp,M):
         numerator = (gamma1*gamma3*fdamp * M)*np.exp((-gamma2)*(f - fRD)/(gamma3*fdamp))
         denominator = (M**2*(f-fRD)**2 + M**2*(gamma3*fdamp)**2)
         return numerator/denominator
-    ###########################################################################################################
+    def Damp_mr(self,f,gamma1,gamma2,gamma3,fRD,fdamp,M):
+        return ( -((np.exp(((-f + fRD)*gamma2)/(fdamp*gamma3))*gamma1*
+           (f**2*gamma2 - 2*f*fRD*gamma2 + fRD**2*gamma2 + 2*f*fdamp*gamma3 - 2*fdamp*fRD*gamma3 + 
+             fdamp**2*gamma2*gamma3**2))/((f**2 - 2*f*fRD + fRD**2 + fdamp**2*gamma3**2)**2*M)))    
+###########################################################################################################
+
     """Vectorized Waveform Functions"""
     """Break up full frequency range into respective regions and call regions separately -
     Removes the need for if statements, which would cause issues with vectorization -
@@ -615,7 +676,6 @@ class IMRPhenomD():
             self.pn_phase_deriv_chi_a.append(grad(utilities.calculate_pn_phase,3)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
             self.pn_phase_deriv_chi_s.append(grad(utilities.calculate_pn_phase,4)(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1.1,i))
         """Delta Parameters take up ~50 percent of the total time"""
-        start=time()
         self.param_deltas_derivs_chirpm = []
         self.param_deltas_derivs_symmratio = []
         self.param_deltas_derivs_delta = []
@@ -843,7 +903,7 @@ class IMRPhenomD():
 
 
         fisher = fisher + np.transpose(fisher)
-        print(fisher)
+        #print(fisher)
         try:
             chol_fisher = np.linalg.cholesky(fisher)
             inv_chol_fisher = np.linalg.inv(chol_fisher)
@@ -1471,6 +1531,7 @@ class IMRPhenomD_detector_frame(IMRPhenomD):
         for i in [0,1,2,3,4,7]:
             self.pn_phase[i] = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
 
+        #self.pn_phase = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,[0,1,2,3,4,7])
         """Numerical Fit Parameters"""
         self.parameters =[]
         for i in np.arange(len(Lambda)):
