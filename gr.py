@@ -675,6 +675,9 @@ class IMRPhenomD():
 
     def calculate_upper_freq(self,freq,detector):
         """Finds indicies of frequency that are elements of [800,10000] and trims freq and noise to match"""
+        if self.totalMass_restframe is None:
+            self.Z =Distance(self.DL/mpc,unit=u.Mpc).compute_z(cosmology = self.cosmo_model)
+            self.totalMass_restframe = (self.m1 + self.m2)/(self.Z+1)
         if detector != 'LISA':
             indicies = np.asarray(np.where(np.asarray(freq)>=800)[0],dtype=int)
             trimmed_freq = np.asarray(freq)[indicies]
@@ -1118,6 +1121,7 @@ class IMRPhenomD():
         """Trim Frequencies to seperate which stage to apply (ins,int,mr)"""
         int_freq = np.asarray(freq[flow_pos:fup_pos])#np.asarray(freq)#
         noise_integrand = self.noise_curve[flow_pos:fup_pos]#np.asarray(self.noise_curve)#
+        
         amp,phase,wave = self.calculate_waveform_vector(int_freq)
         Asquared = np.multiply(amp,amp)
         SNR = np.sqrt(integrate.simps( np.divide( np.multiply(4,Asquared) ,np.multiply(noise_integrand,noise_integrand) ),int_freq ) )
@@ -1428,6 +1432,77 @@ class IMRPhenomD_Inspiral_Freq_SPA(IMRPhenomD_Full_Freq_SPA):
         return (super(IMRPhenomD_Full_Freq_SPA,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3))
     def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp):
         return (super(IMRPhenomD_Full_Freq_SPA,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))
+
+class IMRPhenomD_detector_frame(IMRPhenomD):
+    """parameters: mass 1, mass 2, spin PARAMETERS 1 and 2,tc - collision time, phase at tc,
+     the luminosity distance, Cosmology to use (must be a supported cosmology in the astropy.cosmology package), and NSflag (True or False)
+      and N_detectors is the number of detectors that observed the event
+      - all should be in units of [s] or [1/s] - use constants defined above for conversion
+      - all parameters are in the SOURCE frame"""
+
+    def __init__(self, mass1, mass2,spin1,spin2, collision_time, \
+                    collision_phase,Luminosity_Distance,cosmo_model = cosmology.Planck15,NSflag = False,N_detectors=1):
+        """Populate model variables"""
+        self.N_detectors = N_detectors
+        self.NSflag = NSflag
+        self.cosmo_model = cosmo_model
+        self.DL = Luminosity_Distance
+        self.tc = float(collision_time)
+        self.phic = float(collision_phase)
+        self.symmratio = (mass1 * mass2) / (mass1 + mass2 )**2
+        #self.chirpme =  (mass1 * mass2)**(3/5)/(mass1 + mass2)**(1/5)
+        self.chirpm =  (mass1 * mass2)**(3/5)/(mass1 + mass2)**(1/5)
+        self.delta = utilities.calculate_delta(self.symmratio)
+        #self.Z =Distance(Luminosity_Distance/mpc,unit=u.Mpc).compute_z(cosmology = self.cosmo_model)
+        #self.chirpm = self.chirpme*(1+self.Z)
+        self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
+        self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
+        self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
+        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.totalMass_restframe =None# mass1+mass2
+        """Spin Variables"""
+        self.chi1 = spin1
+        self.chi2 = spin2
+        self.chi_s = (spin1 + spin2)/2
+        self.chi_a = (spin1 - spin2)/2
+
+        """Post Newtonian Phase"""
+        self.pn_phase = np.zeros(8)
+        for i in [0,1,2,3,4,7]:
+            self.pn_phase[i] = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
+
+        """Numerical Fit Parameters"""
+        self.parameters =[]
+        for i in np.arange(len(Lambda)):
+            self.parameters.append(self.calculate_parameter(self.chirpm,self.symmratio,self.chi_a,self.chi_s,i))
+
+        """Post Newtonian Amplitude"""
+        self.pn_amp = np.zeros(7)
+        for i in np.arange(7):
+            self.pn_amp[i]=utilities.calculate_pn_amp(self.symmratio,self.delta,self.chi_a,self.chi_s,i)
+
+        """Post Merger Parameters - Ring Down frequency and Damping frequency"""
+        self.fRD = utilities.calculate_postmerger_fRD(\
+            self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
+        self.fdamp = utilities.calculate_postmerger_fdamp(\
+            self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
+        self.fpeak = utilities.calculate_fpeak(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6])
+
+        """Calculating the parameters for the intermediate amplitude region"""
+        self.param_deltas = np.zeros(5)
+        for i in np.arange(5):
+            self.param_deltas[i] = self.calculate_delta_parameter(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i)
+
+        """Phase continuity parameters"""
+        """Must be done in order - beta1,beta0,alpha1, then alpha0"""
+        self.beta1 = self.phase_cont_beta1(self.chirpm,self.symmratio,self.delta,self.phic,self.tc,self.chi_a,self.chi_s)
+        self.beta0 = self.phase_cont_beta0(self.chirpm,self.symmratio,self.delta,self.phic,self.tc,self.chi_a,self.chi_s,self.beta1)
+        self.alpha1 = self.phase_cont_alpha1(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1)
+        self.alpha0 = self.phase_cont_alpha0(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.alpha1)
+        self.var_arr = [self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a]
+
+        """Populate array with variables for transformation from d/d(theta) to d/d(log(theta)) - begins with 0 because fisher matrix variables start at 1, not 0"""
+        self.log_factors = [0,self.A0,1,1,self.chirpm,self.symmratio,1,1]
 
 
 if __name__ == "__main__":

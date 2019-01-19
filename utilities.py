@@ -224,7 +224,7 @@ def calculate_delta_parameter_4(f1,f2,f3,v1,v2,v3,dd1,dd3,M):
 ###########################################################################################################
 #dCS g func for phase modification - \delta \phi = Zeta *g(eta,chirp mass, chi_s, chi_a) (\pi chirpm f)**(-1/3)
 ###########################################################################################
-
+#1603.08955
 def dCS_g(chirpm,symmratio,chi_s,chi_a): 
     coeff = 1549225/11812864 
     m1 = calculate_mass1(chirpm,symmratio) 
