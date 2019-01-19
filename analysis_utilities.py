@@ -3,6 +3,7 @@ import astropy.cosmology as cosmology
 from scipy.optimize import fsolve
 from scipy.integrate import simps
 from phenompy.gr import IMRPhenomD
+from phenompy.gr import IMRPhenomD_detector_frame as imrdf
 from phenompy import utilities
 from phenompy.modified_gr import Modified_IMRPhenomD_Full_Freq as modimr
 from phenompy.modified_gr import Modified_IMRPhenomD_Inspiral_Freq as modimrins
@@ -60,8 +61,8 @@ def LumDist_SNR(mass1, mass2,spin1,spin2,cosmo_model = cosmology.Planck15,NSflag
                         detector=detector,lower_freq=lower_freq,upper_freq=upper_freq),initial_guess)[0]
     return D_L_target/mpc
 def LumDist_SNR_assist(mass1, mass2,spin1,spin2,DL,cosmo_model,NSflag ,N_detectors,detector,lower_freq,upper_freq):
-    temp_model = IMRPhenomD(mass1=mass1, mass2=mass2,spin1=spin1,spin2=spin2, collision_time=0, \
-                    collision_phase=0,Luminosity_Distance=DL,cosmo_model = cosmology.Planck15,NSflag = False,N_detectors=N_detectors)
+    temp_model = imrdf(mass1=mass1, mass2=mass2,spin1=spin1,spin2=spin2, collision_time=0, \
+                    collision_phase=0,Luminosity_Distance=DL,cosmo_model = cosmo_model,NSflag = NSflag,N_detectors=N_detectors)
     SNR_temp = temp_model.calculate_snr(detector=detector,lower_freq=lower_freq,upper_freq=upper_freq)
     return SNR_temp
 ###########################################################################################
@@ -69,7 +70,6 @@ def LumDist_SNR_lite(chirpmass,symmratio,detector,SNR_target,rho_prime=None, N_d
     if rho_prime == None:
         noise_root,noise_func,freq = IMRPhenomD.populate_noise(detector=detector,int_scheme='quad')
         fhigh=0.014*5/(chirpmass*symmratio**(-3/5))
-        print("fhigh",fhigh)
         freq = np.linspace(5,fhigh,1000)
         freq = np.asarray(freq)
         noise_root = noise_func(freq)#np.asarray(noise_root)
