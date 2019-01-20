@@ -165,10 +165,12 @@ class IMRPhenomD():
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         f2 = fRD*0.5
-        #phi_mr_deriv = egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
-        phi_mr_deriv = self.Dphi_mr(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
-        return ((1/M)*egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3)*symmratio -
-            symmratio/M *phi_mr_deriv )
+        #mr_grad = egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
+        #int_grad=egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3)
+        mr_grad = self.Dphi_mr(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
+        int_grad = self.Dphi_int(f2,M,symmratio,beta0,beta1,beta2,beta3)
+        return ((1/M)*int_grad*symmratio -
+            symmratio/M *mr_grad )
             #(alpha2*(1/(M*f2)**2) + alpha3*(M*f2)**(-1/4) + alpha4*(1/(fdamp+(f2-alpha5*fRD)**2/(fdamp)))/M))
 
     def phase_cont_beta0(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1):
@@ -349,6 +351,8 @@ class IMRPhenomD():
     """Frequency of intermediate stage"""
     def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3):
         return (1/symmratio)*(beta0+ beta1*(M*f) + beta2*np.log(M*f) - beta3/3 *(M*f)**(-3))
+    def Dphi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3):
+        return (1/symmratio)*(beta1*(M) + beta2/f + beta3 *(M)**(-3)*(f)**(-4))
     """Amplitude of intermediate stage"""
     def amp_int(self,f,deltas,M):
         return (deltas[0]+ deltas[1]*M*f +deltas[2]*(M*f)**2 + \

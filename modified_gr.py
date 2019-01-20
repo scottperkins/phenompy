@@ -120,9 +120,12 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         sigma2 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,8)
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
-        ins_grad = egrad(self.phi_ins,0)
-        return ((1/M)*ins_grad(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod)*symmratio
-            -symmratio/M*(grad(self.phi_int,0)(f1,M,symmratio,0,0,beta2,beta3,chirpm,phase_mod)))
+        #ins_grad = egrad(self.phi_ins,0)(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod)
+        #int_grad = egrad(self.phi_int,0)(f1,M,symmratio,0,0,beta2,beta3,chirpm,phase_mod)
+        ins_grad = self.Dphi_ins(f1,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod)
+        int_grad = self.Dphi_int(f1,M,symmratio,0,0,beta2,beta3,chirpm,phase_mod)
+        return ((1/M)*ins_grad*symmratio
+            -symmratio/M*int_grad)
 
     def phase_cont_beta0(self,chirpm,symmratio,delta,phic,tc,chi_a,chi_s,beta1,phase_mod):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -147,8 +150,12 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         f2 = fRD*0.5
-        return (1/M)*egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod)*symmratio \
-        -(symmratio/M)*egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod)
+        #int_grad = egrad(self.phi_int,0)(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod)
+        #mr_grad = egrad(self.phi_mr,0)(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod)
+        int_grad = self.Dphi_int(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod)
+        mr_grad = self.Dphi_mr(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod)
+        return (1/M)*int_grad*symmratio \
+        -(symmratio/M)*mr_grad
 
     def phase_cont_alpha0(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -166,10 +173,18 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
     """Added Phase Modification"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)+phase_mod*(chirpm*np.pi*f)**(self.bppe/3))
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)+phase_mod*(chirpm*np.pi)**(self.bppe/3)*f**(self.bppe/3-1)*(self.bppe/3))
+
     def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3))+phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def Dphi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_int(f,M,symmratio,beta0,beta1,beta2,beta3)+phase_mod*(chirpm*np.pi)**(self.bppe/3)*f**(self.bppe/3-1)*(self.bppe/3))
+
     def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))+phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def Dphi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)+phase_mod*(chirpm*np.pi)**(self.bppe/3)*f**(self.bppe/3-1)*(self.bppe/3))
     ######################################################################################
     """Added phase mod argument for derivatives - returns the same as GR"""
     def amp_ins_vector(self,f,A0,phic,tc,chirpm,symmratio,chi_s,chi_a,phase_mod):
@@ -546,8 +561,12 @@ Calculation of th modification from Will '97"""
 class Modified_IMRPhenomD_Inspiral_Freq(Modified_IMRPhenomD_Full_Freq):
     def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def Dphi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_int(f,M,symmratio,beta0,beta1,beta2,beta3))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
     def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def Dphi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
 
 
 
@@ -556,22 +575,38 @@ the derivation in arXiv:gr-qc/9901076 - includes ppE correction and GR correctio
 class Modified_IMRPhenomD_Full_Freq_SPA(Modified_IMRPhenomD_Full_Freq):
     def SPA_correction(self,f,chirpm,b,phase_mod):
         return 92/45 * (np.pi * chirpm * f)**(5/3)+ (160/1125)*(1431 + 676*b + 134*b**2 + 9*b**3) * phase_mod * (np.pi * chirpm* f)**((10+b)/3)
+    def DSPA_correction(self,f,chirpm,b,phase_mod):
+        return 92/45 * (np.pi * chirpm )**(5/3)*(5/3)*f**(5/3-1)+ (160/1125)*(1431 + 676*b + 134*b**2 + 9*b**3) * phase_mod * (np.pi * chirpm)**((10+b)/3)*((10+b)/3)*f**((10+b)/3-1)
+
     """Just need to add terms to the phase functions - call super method, and append correction term"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).Dphi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.DSPA_correction(f,chirpm,self.bppe,phase_mod)
+
     def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)
+    def Dphi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).Dphi_int(f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod))+ self.DSPA_correction(f,chirpm,self.bppe,phase_mod)
+
     def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)
+    def Dphi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).Dphi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod))+ self.DSPA_correction(f,chirpm,self.bppe,phase_mod)
 
 """Class that includes ppE parameter in phase for Fisher analysis in inspiral frequency range- adjusted for correction to SPA, following
 the derivation in arXiv:gr-qc/9901076 - includes ppE correction and GR correction term"""
 class Modified_IMRPhenomD_Inspiral_Freq_SPA(Modified_IMRPhenomD_Inspiral_Freq):
     def SPA_correction(self,f,chirpm,b,phase_mod):
         return 92/45 * (np.pi * chirpm * f)**(5/3)+ (160/1125)*(1431 + 676*b + 134*b**2 + 9*b**3) * phase_mod * (np.pi * chirpm* f)**((10+b)/3)
+    def DSPA_correction(self,f,chirpm,b,phase_mod):
+        return 92/45 * (np.pi * chirpm )**(5/3)*(5/3)*f**(5/3-1)+ (160/1125)*(1431 + 676*b + 134*b**2 + 9*b**3) * phase_mod * (np.pi * chirpm)**((10+b)/3)*((10+b)/3)*f**((10+b)/3-1)
+
     """Just need to add terms to the phase functions - call super method, and append correction term"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
-        return (super(Modified_IMRPhenomD_Full_Freq_SPA,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)
+        return (super(Modified_IMRPhenomD_Inspiral_Freq_SPA,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.SPA_correction(f,chirpm,self.bppe,phase_mod)
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        return (super(Modified_IMRPhenomD_Inspiral_Freq_SPA,self).Dphi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod))+ self.DSPA_correction(f,chirpm,self.bppe,phase_mod)
 
 """Modified IMRPhenomD to treat the log of the transition frequency from intermediate to merger-rindown
 as extra Fisher Variables - Full Variable List:
@@ -664,8 +699,10 @@ class Modified_IMRPhenomD_Transition_Freq(IMRPhenomD):
         beta2 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,12)
         beta3 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,13)
         f1 = f_transition
-        return (1/M)*egrad(self.phi_int,0)(f1,M,symmratio,beta0,beta1,beta2,beta3)*symmratio \
-        -(symmratio/M)*egrad(self.phi_mr,0)(f1,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp)
+        int_grad = self.Dphi_int(f2,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod)
+        mr_grad = self.Dphi_mr(f2,chirpm,symmratio,0,0,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod)
+        return (1/M)*int_grad*symmratio \
+        -(symmratio/M)*mr_grad
 
     def phase_cont_alpha0(self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,f_transition):
         M = self.assign_totalmass(chirpm,symmratio)
@@ -1516,3 +1553,8 @@ class dCS_IMRPhenomD(Modified_IMRPhenomD_Inspiral_Freq):
         return (IMRPhenomD.phi_ins(
                 self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
                 + 16*np.pi*phase_mod * utilities.dCS_g(chirpm,symmratio,chi_s,chi_a)/m**4 * (np.pi * chirpm* f)**(self.bppe/3))
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        m = utilities.calculate_totalmass(chirpm,symmratio)
+        return (IMRPhenomD.Dphi_ins(
+                self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+                + 16*np.pi*phase_mod * utilities.dCS_g(chirpm,symmratio,chi_s,chi_a)/m**4 * (np.pi * chirpm)**(self.bppe/3)*(self.bppe/3)*f**(self.bppe/3 -1))
