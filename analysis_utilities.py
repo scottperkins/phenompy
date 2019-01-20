@@ -8,6 +8,7 @@ from phenompy import utilities
 from phenompy.modified_gr import Modified_IMRPhenomD_Full_Freq as modimr
 from phenompy.modified_gr import Modified_IMRPhenomD_Inspiral_Freq as modimrins
 from phenompy.modified_gr import dCS_IMRPhenomD as dcsimr
+from phenompy.modified_gr import dCS_IMRPhenomD_detector_frame as dcsimr_detector_frame
 import os
 import matplotlib.pyplot as plt
 from astropy.coordinates import Distance
@@ -122,6 +123,29 @@ def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin
     mass1 = utilities.calculate_mass1(chirpme,symmratio)
     mass2 = utilities.calculate_mass2(chirpme,symmratio)
     model = dcsimr(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
+                    Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag,
+                    N_detectors = N_detectors) 
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = model.calculate_waveform_vector(frequencies)
+    #h_complex = np.multiply(amp,np.add(np.cos(phase),-1j*np.sin(phase)))
+    h_complex = amp*np.exp(-1j*phase)
+    noise_temp,noise_func, freq = model.populate_noise(detector=detector,int_scheme='quad')
+    resid = np.subtract(Data,h_complex)
+    #integrand_numerator = np.multiply(np.conjugate(Data), h_complex) + np.multiply(Data,np.conjugate( h_complex))
+    integrand_numerator = np.multiply(resid,np.conjugate(resid))
+
+    noise_root =noise_func(frequencies)
+    noise = np.multiply(noise_root, noise_root)
+    integrand = np.divide(integrand_numerator,noise)
+    integral = np.real(simps(integrand,frequencies))
+    return -2*integral 
+###########################################################################################
+###########################################################################################
+def log_likelihood_detector_frame(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    model = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
                     Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
     frequencies = np.asarray(frequencies)

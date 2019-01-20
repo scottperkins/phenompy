@@ -555,6 +555,84 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
                 lambda ans,self,chirpm,symmratio,chi_a,chi_s,fRD,fdamp,beta0,beta1,alpha1,phase_mod: lambda g: g*self.alpha0_deriv[9])
 
 
+"""Same as Modified full Freq, but the arguments are detector frame"""
+class Modified_IMRPhenomD_Full_Freq_detector_frame(Modified_IMRPhenomD_Full_Freq):
+    def __init__(self, mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = 0,bppe = -3,
+                    cosmo_model = cosmology.Planck15,NSflag = False,N_detectors = 1):
+        """Populate model variables"""
+        self.N_detectors = N_detectors
+        self.NSflag = NSflag
+        self.cosmo_model = cosmo_model
+        self.DL = Luminosity_Distance
+        self.tc = float(collision_time)
+        self.phic = float(collision_phase)
+        self.symmratio = (mass1 * mass2) / (mass1 + mass2 )**2
+        #self.chirpme =  (mass1 * mass2)**(3/5)/(mass1 + mass2)**(1/5)
+        self.delta = utilities.calculate_delta(self.symmratio)
+        self.chirpm =  (mass1 * mass2)**(3/5)/(mass1 + mass2)**(1/5)
+        #self.Z =Distance(Luminosity_Distance/mpc,unit=u.Mpc).compute_z(cosmology = self.cosmo_model)#.01
+        #self.chirpm = self.chirpme*(1+self.Z)
+        self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
+        self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
+        self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
+        self.totalMass_restframe = mass1+mass2
+        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+
+        """Spin Variables"""
+        self.chi1 = spin1
+        self.chi2 = spin2
+        self.chi_s = (spin1 + spin2)/2
+        self.chi_a = (spin1 - spin2)/2
+
+        """Post Newtonian Phase"""
+        self.pn_phase = np.zeros(8)
+        for i in [0,1,2,3,4,7]:
+            self.pn_phase[i] = utilities.calculate_pn_phase(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,1,i)
+
+        """Numerical Fit Parameters"""
+        self.parameters =[]
+        for i in np.arange(len(Lambda)):
+            self.parameters.append(self.calculate_parameter(self.chirpm,self.symmratio,self.chi_a,self.chi_s,i))
+
+        """Post Newtonian Amplitude"""
+        self.pn_amp = np.zeros(7)
+        for i in np.arange(7):
+            self.pn_amp[i]=utilities.calculate_pn_amp(self.symmratio,self.delta,self.chi_a,self.chi_s,i)
+
+        """Post Merger Parameters - Ring Down frequency and Damping frequency"""
+        self.fRD = utilities.calculate_postmerger_fRD(\
+            self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
+        self.fdamp = utilities.calculate_postmerger_fdamp(\
+            self.m1,self.m2,self.M,self.symmratio,self.chi_s,self.chi_a)
+        self.fpeak = utilities.calculate_fpeak(self.M,self.fRD,self.fdamp,self.parameters[5],self.parameters[6])
+
+
+
+        """Calculating the parameters for the intermediate amplitude region"""
+        self.param_deltas = np.zeros(5)
+        for i in np.arange(5):
+            self.param_deltas[i] = self.calculate_delta_parameter(self.chirpm,self.symmratio,self.delta,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.fpeak,i)
+
+        """Only modifications to the system variables are below:
+        -beta1
+        -beta0
+        -phase_mod
+        -bppe
+        -var_arr"""
+        #################################################################################
+        """Phase continuity parameters"""
+        """Must be done in order - beta1,beta0,alpha1, then alpha0"""
+        self.phase_mod = float(phase_mod)
+        self.bppe = bppe
+        self.beta1 = self.phase_cont_beta1(self.chirpm,self.symmratio,self.delta,self.phic,self.tc,self.chi_a,self.chi_s,self.phase_mod)
+        self.beta0 = self.phase_cont_beta0(self.chirpm,self.symmratio,self.delta,self.phic,self.tc,self.chi_a,self.chi_s,self.beta1,self.phase_mod)
+        self.alpha1 = self.phase_cont_alpha1(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.phase_mod)
+        self.alpha0 = self.phase_cont_alpha0(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.alpha1,self.phase_mod)
+        self.var_arr = [self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a,self.phase_mod]
+
+
+
 """Child class of Modified_IMRPhenomD - adds modification to the phase of the waveform in the inspiral region -
 extra arguments: phase_mod (=0), bppe (=-3) -> phi_ins = IMRPhenomD.phi_ins + phase_mod*(pi*chirpm*f)**(bppe/3)
 Calculation of th modification from Will '97"""
@@ -568,7 +646,16 @@ class Modified_IMRPhenomD_Inspiral_Freq(Modified_IMRPhenomD_Full_Freq):
     def Dphi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
 
-
+"""Same as above, but for detector frame"""
+class Modified_IMRPhenomD_Inspiral_Freq_detector_frame(Modified_IMRPhenomD_Full_Freq_detector_frame):
+    def phi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).phi_int(f,M,symmratio,beta0,beta1,beta2,beta3))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def Dphi_int(self,f,M,symmratio,beta0,beta1,beta2,beta3,chirpm,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_int(f,M,symmratio,beta0,beta1,beta2,beta3))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def phi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).phi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
+    def Dphi_mr(self,f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp,phase_mod):
+        return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_mr(f,chirpm,symmratio,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,fRD,fdamp))#-phase_mod*(chirpm*np.pi*f)**(self.bppe/3)
 
 """Class that includes ppE parameter in phase for Fisher analysis in entire frequency range- adjusted for correction to SPA, following
 the derivation in arXiv:gr-qc/9901076 - includes ppE correction and GR correction term, see nb for the mod SPA coefficients"""
@@ -1546,6 +1633,26 @@ class dCS_IMRPhenomD(Modified_IMRPhenomD_Inspiral_Freq):
                     collision_phase,Luminosity_Distance,phase_mod = 0,
                     cosmo_model = cosmology.Planck15,NSflag = False,N_detectors = 1):
         super(dCS_IMRPhenomD,self).__init__(mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = phase_mod,bppe = -1,
+                    cosmo_model = cosmo_model,NSflag = NSflag,N_detectors = N_detectors)
+    def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        m = utilities.calculate_totalmass(chirpm,symmratio)
+        return (IMRPhenomD.phi_ins(
+                self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+                + 16*np.pi*phase_mod * utilities.dCS_g(chirpm,symmratio,chi_s,chi_a)/m**4 * (np.pi * chirpm* f)**(self.bppe/3))
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        m = utilities.calculate_totalmass(chirpm,symmratio)
+        return (IMRPhenomD.Dphi_ins(
+                self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+                + 16*np.pi*phase_mod * utilities.dCS_g(chirpm,symmratio,chi_s,chi_a)/m**4 * (np.pi * chirpm)**(self.bppe/3)*(self.bppe/3)*f**(self.bppe/3 -1))
+
+
+
+class dCS_IMRPhenomD_detector_frame(Modified_IMRPhenomD_Inspiral_Freq_detector_frame):
+    def __init__(self, mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = 0,
+                    cosmo_model = cosmology.Planck15,NSflag = False,N_detectors = 1):
+        super(dCS_IMRPhenomD_detector_frame,self).__init__(mass1, mass2,spin1,spin2, collision_time,
                     collision_phase,Luminosity_Distance,phase_mod = phase_mod,bppe = -1,
                     cosmo_model = cosmo_model,NSflag = NSflag,N_detectors = N_detectors)
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
