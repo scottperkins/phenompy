@@ -118,11 +118,11 @@ def log_likelihood_Full(Data,frequencies, A0, t_c,phi_c, chirpm,symmratio,
 ###########################################################################################
 def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
                 alpha_squared,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
-    Z = Distance(DL/mpc,unit=u.Mpc).compute_z(cosmology = cosmology) 
-    chirpme = chirpm/(1+Z)
-    mass1 = utilities.calculate_mass1(chirpme,symmratio)
-    mass2 = utilities.calculate_mass2(chirpme,symmratio)
-    model = dcsimr(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
+    #Z = Distance(DL/mpc,unit=u.Mpc).compute_z(cosmology = cosmology) 
+    #chirpme = chirpm/(1+Z)
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    model = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
                     Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag,
                     N_detectors = N_detectors) 
     frequencies = np.asarray(frequencies)
