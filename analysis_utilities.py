@@ -141,14 +141,14 @@ def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin
     return -2*integral 
 ###########################################################################################
 ###########################################################################################
-def log_likelihood_detector_frame(Data,frequencies, SNR, t_c,phi_c, chirpm,symmratio, spin1,spin2,
-                alpha_squared,bppe,NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
+def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,detector,cosmology=cosmology.Planck15):
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
-    DL = 1000*mpc
+    DL = 100*mpc
     model = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
-                    Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag,
-                    N_detectors = N_detectors) 
+                    Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+                     
     frequencies = np.asarray(frequencies)
     model.fix_snr(snr_target=SNR,detector=detector,lower_freq=frequencies[0],upper_freq=frequencies[-1])
 
