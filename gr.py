@@ -1188,6 +1188,7 @@ class IMRPhenomD():
         Asquared = np.multiply(amp,amp)
         SNR = np.sqrt(integrate.simps( np.divide( np.multiply(4,Asquared) ,np.multiply(noise_integrand,noise_integrand) ),int_freq ) )
         return SNR
+         
 
     """Assignment helper functions - each must have a manually defined grad wrt each argument
     For element_wise_grad to work correcly (priority - using loops over vectors is VASTLY slower)
@@ -1567,6 +1568,12 @@ class IMRPhenomD_detector_frame(IMRPhenomD):
         """Populate array with variables for transformation from d/d(theta) to d/d(log(theta)) - begins with 0 because fisher matrix variables start at 1, not 0"""
         self.log_factors = [0,self.A0,1,1,self.chirpm,self.symmratio,1,1]
 
+    def fix_snr(self,snr_target,detector='aLIGO',lower_freq=None,upper_freq=None):
+        snr_current = self.calculate_snr(detector=detector,lower_freq=lower_freq,upper_freq=upper_freq)
+        oldDL = self.DL
+        self.DL = self.DL*snr_current/snr_target
+        self.A0 = self.A0*oldDL/self.DL
+        self.var_arr[0] = self.A0
 
 if __name__ == "__main__":
     """Example code that generates a model with the parameters below, calculates GR Fisher and modified Fisher,

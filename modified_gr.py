@@ -631,6 +631,12 @@ class Modified_IMRPhenomD_Full_Freq_detector_frame(Modified_IMRPhenomD_Full_Freq
         self.alpha0 = self.phase_cont_alpha0(self.chirpm,self.symmratio,self.chi_a,self.chi_s,self.fRD,self.fdamp,self.beta0,self.beta1,self.alpha1,self.phase_mod)
         self.var_arr = [self.A0,self.phic,self.tc,self.chirpm,self.symmratio,self.chi_s,self.chi_a,self.phase_mod]
 
+    def fix_snr(self,snr_target,detector='aLIGO',lower_freq=None,upper_freq=None):
+        snr_current = self.calculate_snr(detector=detector,lower_freq=lower_freq,upper_freq=upper_freq)
+        oldDL = self.DL
+        self.DL = self.DL*snr_current/snr_target
+        self.A0 = self.A0*oldDL/self.DL
+        self.var_arr[0] = self.A0
 
 
 """Child class of Modified_IMRPhenomD - adds modification to the phase of the waveform in the inspiral region -
