@@ -487,6 +487,36 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         """Return the amplitude vector, phase vector, and real part of the waveform"""
         return ampout,phaseout, np.multiply(ampout,np.cos(phaseout))
 
+    """For expediated evaluation of snr"""
+    def calculate_waveform_amplitude_vector(self,freq):
+
+        """Array of the functions used to populate derivative vectors"""
+        ampfunc = [self.amp_ins_vector,self.amp_int_vector,self.amp_mr_vector]
+        """Check to see if every region is sampled - if integration frequency
+        doesn't reach a region, the loop is trimmed to avoid issues with unpopulated arrays"""
+
+        famp = self.split_freqs_amp(freq)
+        
+
+        jamp = [0,1,2]
+        for i in np.arange(len(famp)):
+            if len(famp[i]) == 0:
+                jamp[i] = -1
+        jamp = [x for x in jamp if x != -1]
+
+        var_arr= self.var_arr[:]
+        amp = [[],[],[]]
+
+        """Populate derivative vectors one region at a time"""
+        for j in jamp:
+            amp[j]= ampfunc[j](famp[j],var_arr[0],var_arr[1],var_arr[2],var_arr[3],var_arr[4],var_arr[5],var_arr[6],var_arr[7])
+        """Concatenate the regions into one array"""
+        ampout=[]
+        for j in jamp:
+            ampout = np.concatenate((ampout,amp[j]))
+
+        """Return the amplitude vector, phase vector, and real part of the waveform"""
+        return ampout
 
     """Derivative Definitions - added phase_mod to derivatives"""
     @primitive
@@ -633,10 +663,12 @@ class Modified_IMRPhenomD_Full_Freq_detector_frame(Modified_IMRPhenomD_Full_Freq
 
     def fix_snr(self,snr_target,detector='aLIGO',lower_freq=None,upper_freq=None):
         snr_current = self.calculate_snr(detector=detector,lower_freq=lower_freq,upper_freq=upper_freq)
+        #snr_current = self.calculate_snr_old(detector=detector,lower_freq=lower_freq,upper_freq=upper_freq)
         oldDL = self.DL
         self.DL = self.DL*snr_current/snr_target
         self.A0 = self.A0*oldDL/self.DL
         self.var_arr[0] = self.A0
+
 
 
 """Child class of Modified_IMRPhenomD - adds modification to the phase of the waveform in the inspiral region -

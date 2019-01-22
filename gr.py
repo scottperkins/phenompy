@@ -536,6 +536,36 @@ class IMRPhenomD():
         """Return the amplitude vector, phase vector, and real part of the waveform"""
         return ampout,phaseout, np.multiply(ampout,np.cos(phaseout))
 
+    """Method for calculating just the amplitude - faster for calculating SNR etc"""
+    def calculate_waveform_amplitude_vector(self,freq):
+        """Array of the functions used to populate derivative vectors"""
+        ampfunc = [self.amp_ins_vector,self.amp_int_vector,self.amp_mr_vector]
+        """Check to see if every region is sampled - if integration frequency
+        doesn't reach a region, the loop is trimmed to avoid issues with unpopulated arrays"""
+        famp = self.split_freqs_amp(freq)
+        jamp=[0,1,2]
+
+        jamp = [0,1,2]
+        for i in np.arange(len(famp)):
+            if len(famp[i]) == 0:
+                jamp[i] = -1
+        jamp = [x for x in jamp if x != -1]
+
+        var_arr= self.var_arr[:]
+        amp = [[],[],[]]
+
+        """Populate derivative vectors one region at a time"""
+        for j in jamp:
+            amp[j]= ampfunc[j](famp[j],var_arr[0],var_arr[1],var_arr[2],var_arr[3],var_arr[4],var_arr[5],var_arr[6])
+
+        """Concatenate the regions into one array"""
+        ampout,phaseout =[],[]
+        for j in jamp:
+            ampout = np.concatenate((ampout,amp[j]))
+
+        """Return the amplitude vector, phase vector, and real part of the waveform"""
+        return ampout
+        #################################################################################################
     ###########################################################################################################
     """Stitch the amplitude together based on the critical frequencies - LOOP VERSION - Much slower than vectorized version"""
     def full_amp(self,f,A0,phic,tc,chirpm,symmratio,chi_s,chi_a):
@@ -1152,7 +1182,10 @@ class IMRPhenomD():
 
     """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
     **NOTE** I'm using trimmed frequencies here. Should I be using the full 10000 Hz range?"""
-    def calculate_snr(self,detector='aLIGO',lower_freq=None,upper_freq=None):
+    ###################################################################
+    #Deprecated - saved for testing, will be deleted
+    ###################################################################
+    def calculate_snr_old(self,detector='aLIGO',lower_freq=None,upper_freq=None):
         self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector=detector)
         if len(self.noise_curve) == 0:
             return "ERROR in noise_curve population"
@@ -1189,6 +1222,44 @@ class IMRPhenomD():
         SNR = np.sqrt(integrate.simps( np.divide( np.multiply(4,Asquared) ,np.multiply(noise_integrand,noise_integrand) ),int_freq ) )
         return SNR
          
+    """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
+    **NOTE** I'm using trimmed frequencies here. Should I be using the full 10000 Hz range?"""
+    def calculate_snr(self,detector='aLIGO',lower_freq=None,upper_freq=None):
+        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector=detector)
+        if len(self.noise_curve) == 0:
+            return "ERROR in noise_curve population"
+
+        if lower_freq == None:
+            self.lower_freq =self.calculate_lower_freq(freq,detector=detector)
+        else:
+            self.lower_freq  = lower_freq
+        if upper_freq == None:
+            self.upper_freq =self.calculate_upper_freq(freq,detector=detector)
+        else:
+            self.upper_freq = upper_freq
+        """Trim frequency and noise curve down to [flower,fupper]"""
+        ftemp = freq[0]
+        i = 0
+        while ftemp <self.lower_freq:
+            i +=1
+            ftemp = freq[i]
+        flow_pos = i
+
+        ftemp = freq[len(freq)-1]
+        i = len(freq)-1
+        while ftemp > self.upper_freq:
+            i-= 1
+            ftemp = freq[i]
+        fup_pos = i
+
+        """Trim Frequencies to seperate which stage to apply (ins,int,mr)"""
+        int_freq = np.asarray(freq[flow_pos:fup_pos])#np.asarray(freq)#
+        noise_integrand = self.noise_curve[flow_pos:fup_pos]#np.asarray(self.noise_curve)#
+        
+        amp = self.calculate_waveform_amplitude_vector(int_freq)
+        Asquared = np.multiply(amp,amp)
+        SNR = np.sqrt(integrate.simps( np.divide( np.multiply(4,Asquared) ,np.multiply(noise_integrand,noise_integrand) ),int_freq ) )
+        return SNR
 
     """Assignment helper functions - each must have a manually defined grad wrt each argument
     For element_wise_grad to work correcly (priority - using loops over vectors is VASTLY slower)
