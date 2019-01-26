@@ -169,32 +169,65 @@ def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,s
 
 def log_likelihood_maximized_coal(Data,frequencies,SNR,chirpm,symmratio, spin1,spin2,
                 alpha_squared,bppe,NSflag,detector,cosmology=cosmology.Planck15):
+    #Construct template with random luminosity distance
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
     DL = 100*mpc
     template = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=0,collision_phase=0,Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
-    template.fix_snr(SNR,detector=detector)
 
+    #Construct preliminary waveform for template
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = template.calculate_waveform_vector(frequencies)
     h_complex = amp*np.exp(-1j*phase)
 
+    #construct noise model
     noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
     noise_root =noise_func(frequencies)
     noise = np.multiply(noise_root, noise_root)
 
+    #Fix snr of template to match the data
+    snr_template = np.sqrt(4*simps(amp*amp/noise,frequencies).real)
+    h_complex = SNR/snr_template * h_complex
+
+    #Construct the inverse fourier transform of the inner product (D|h)
     g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) , h_complex ) , noise )
     g = np.fft.ifft(g_tilde)
+
+    #Maximize over tc and phic
     gmag = np.abs(g)
-    maxg = np.amax( gmag ).real*len(h_complex)
-    snr1 = np.sum((4*(Data*np.conjugate(Data))/noise).real)#/len(h_complex)
-    snr2 = np.sum((4*(h_complex*np.conjugate(h_complex))/noise).real)#/len(h_complex)
+    maxg = np.amax( gmag ).real*len(frequencies)
+    #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
+    #with the normalization factors for the ifft
+    #Note: tried to avoid this, but it seems mixing integration schemes causes issues 
+    #   ie, using simps and sum interchangeably doesn't work. Need to use sum to normalize ifft
+    snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)
+
+    #Return the loglikelihood
+    maxgindex = np.argmax( gmag )
+    maxgcompl = g[maxgindex]
+    print(np.arctan((maxgcompl/4).imag/(maxgcompl/4).real)/np.pi)
+    return -(SNR**2-SNR**2*maxg/(snr1sum))
+
+    #Development stuff - keep for the near term, delete eventually
+    #snr1squared = simps(4*(Data*np.conjugate(Data))/noise,frequencies).real
+    #snr1 = np.sqrt(snr1squared)
+    #print("internal logl: ",snr1,SNR)
+    ##snr1sum = snr1squared*len(frequencies)/(frequencies[-1]-frequencies[0])
+    #snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)#/len(h_complex)
+    #snr1squared = snr1sum*(frequencies[-1]-frequencies[0])/len(frequencies)
+    #snr1 = np.sqrt(snr1squared)
+    #snr2sum = np.sum((4*(h_complex*np.conjugate(h_complex))/noise).real)#/len(h_complex)
+    #snr1squared = snr1sum*(frequencies[-1]-frequencies[0])/len(frequencies)
+    #snr2squared = snr2sum*(frequencies[-1]-frequencies[0])/len(frequencies)
     #snr1 = simps((4*(Data*np.conjugate(Data))/noise),frequencies).real
     #snr2 = simps((4*(h_complex*np.conjugate(h_complex))/noise).real,frequencies)
-    print("likelihood internal print: ",snr1,snr2,SNR**2)
+    #print("likelihood internal print: ",snr1squared**.5,snr2squared**.5,SNR)
     #SNR = (snr1*snr2)**(1/4)
     #return -1/2*(snr1+snr2-2*maxg)
-    return - (2*SNR**2-2*SNR**2*maxg/(snr1*snr2)**(1/2))
+    #return - (2*SNR**2-2*SNR**2*maxg/(snr1sum*snr2sum)**(1/2))
+    #return -(snr1squared-maxg*(frequencies[-1]-frequencies[0]))
+    #return -(snr1squared-snr1squared*maxg/(snr1sum))
+    #return - (snr1squared+snr2squared-2*(snr1squared*snr2squared)**(1/2)*maxg/(snr1sum*snr2sum)**(1/2))
     #return maxg/SNR**2,SNR
 
 

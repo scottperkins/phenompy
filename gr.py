@@ -1264,7 +1264,7 @@ class IMRPhenomD():
     """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
     **NOTE** Using supplied frequency array"""
     def calculate_snr_series(self,detector,frequencies):
-        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector=detector)
+        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector=detector,int_scheme='quad')
         if len(self.noise_curve) == 0:
             return "ERROR in noise_curve population"
 
