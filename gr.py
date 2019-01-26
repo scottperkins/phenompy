@@ -1261,6 +1261,19 @@ class IMRPhenomD():
         SNR = np.sqrt(integrate.simps( np.divide( np.multiply(4,Asquared) ,np.multiply(noise_integrand,noise_integrand) ),int_freq ) )
         return SNR
 
+    """Calculate SNR defined to be integral(|h|**2/NOISE) = integral(2 A**2/NOISE)
+    **NOTE** Using supplied frequency array"""
+    def calculate_snr_series(self,detector,frequencies):
+        self.noise_curve, self.noise_func, freq = IMRPhenomD.populate_noise(detector=detector)
+        if len(self.noise_curve) == 0:
+            return "ERROR in noise_curve population"
+
+        noise = self.noise_func(frequencies)
+        
+        amp = self.calculate_waveform_amplitude_vector(frequencies)
+        Asquared = np.multiply(amp,amp)
+        SNR = np.sqrt(integrate.simps( np.divide( np.multiply(4,Asquared) ,np.multiply(noise,noise) ),frequencies ) )
+        return SNR
     """Assignment helper functions - each must have a manually defined grad wrt each argument
     For element_wise_grad to work correcly (priority - using loops over vectors is VASTLY slower)
     these helper functions must have the option to return an array (which would just be an array of

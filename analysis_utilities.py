@@ -146,9 +146,9 @@ def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,s
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
     DL = 100*mpc
-    model = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
-                    Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
-                     
+    model = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+    #model = imrdf(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
+    #                Luminosity_Distance=DL, cosmo_model=cosmology,NSflag=NSflag)
     frequencies = np.asarray(frequencies)
     model.fix_snr(snr_target=SNR,detector=detector,lower_freq=frequencies[0],upper_freq=frequencies[-1])
 
@@ -164,7 +164,40 @@ def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,s
     noise = np.multiply(noise_root, noise_root)
     integrand = np.divide(integrand_numerator,noise)
     integral = np.real(simps(integrand,frequencies))
+    #integral = np.real(np.sum(integrand))
     return -2*integral 
+
+def log_likelihood_maximized_coal(Data,frequencies,SNR,chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,detector,cosmology=cosmology.Planck15):
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    DL = 100*mpc
+    template = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=0,collision_phase=0,Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+    template.fix_snr(SNR,detector=detector)
+
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = template.calculate_waveform_vector(frequencies)
+    h_complex = amp*np.exp(-1j*phase)
+
+    noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
+    noise_root =noise_func(frequencies)
+    noise = np.multiply(noise_root, noise_root)
+
+    g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) , h_complex ) , noise )
+    g = np.fft.ifft(g_tilde)
+    gmag = np.abs(g)
+    maxg = np.amax( gmag ).real*len(h_complex)
+    snr1 = np.sum((4*(Data*np.conjugate(Data))/noise).real)#/len(h_complex)
+    snr2 = np.sum((4*(h_complex*np.conjugate(h_complex))/noise).real)#/len(h_complex)
+    #snr1 = simps((4*(Data*np.conjugate(Data))/noise),frequencies).real
+    #snr2 = simps((4*(h_complex*np.conjugate(h_complex))/noise).real,frequencies)
+    print("likelihood internal print: ",snr1,snr2,SNR**2)
+    #SNR = (snr1*snr2)**(1/4)
+    #return -1/2*(snr1+snr2-2*maxg)
+    return - (2*SNR**2-2*SNR**2*maxg/(snr1*snr2)**(1/2))
+    #return maxg/SNR**2,SNR
+
+
 ###########################################################################################
 def log_likelihood_GR(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
                 NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
@@ -190,6 +223,20 @@ def log_likelihood_GR(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,s
     return -2*integral 
 ###########################################################################################
 ###########################################################################################
+"""Function to find the coalescence phase and time 1807.07163"""
+def coal_var(template,data,noise):
+    g_tilde = G_tilde(template,data,noise) 
+    g = np.fft.ifft(g_tilde)
+    tc_index = np.argmax( np.multiply( g, np.conj(g) ) )
+    tc = 0 
+    phic =  np.arctan( g[tc_index].imag / g[tc_index].real)
+    return phic,tc
+
+def G_tilde(template,data,noise):
+    return np.divide( np.multiply( np.conj(data) , template ) , noise )
+
+
+
 """Functions specific to constraining th graviton mass in screened gravity - see arXiv:1811.02533"""
 ###########################################################################################
 ###########################################################################################
