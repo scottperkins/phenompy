@@ -16,6 +16,8 @@ from astropy import units as u
 import csv
 from scipy.interpolate import interp1d
 from time import time
+#import modified bessel function of the first kind
+from scipy.special import iv
 
 s_solm = utilities.s_solm
 mpc = utilities.mpc
@@ -167,8 +169,10 @@ def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,s
     #integral = np.real(np.sum(integrand))
     return -2*integral 
 
-def log_likelihood_maximized_coal(Data,frequencies,SNR,chirpm,symmratio, spin1,spin2,
-                alpha_squared,bppe,NSflag,detector,cosmology=cosmology.Planck15):
+def log_likelihood_maximized_coal_ligo_version(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    deltaf = frequencies[1]-frequencies[0]
+
     #Construct template with random luminosity distance
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
@@ -181,9 +185,52 @@ def log_likelihood_maximized_coal(Data,frequencies,SNR,chirpm,symmratio, spin1,s
     h_complex = amp*np.exp(-1j*phase)
 
     #construct noise model
-    noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
-    noise_root =noise_func(frequencies)
-    noise = np.multiply(noise_root, noise_root)
+    #start=time()
+    #noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
+    #noise_root =noise_func(frequencies)
+    #noise = np.multiply(noise_root, noise_root)
+    #print('noise time: ', time()-start)
+
+    #Fix snr of template to match the data
+    snr_template = np.sqrt(4*simps(amp*amp/noise,frequencies).real)
+    h_complex = SNR/snr_template * h_complex
+
+    #Construct the inverse fourier transform of the inner product (D|h)
+    #h_complex = np.insert(h_complex,0,np.conjugate(np.flip(h_complex)))
+    #Data = np.insert(Data,0,np.conjugate(np.flip(Data)))
+    #noise = np.insert(noise,0,np.conjugate(np.flip(noise)))
+    #frequncies =np.insert(frequencies,0,-np.flip(frequencies)) 
+    g_tilde = np.divide( np.multiply( np.conjugate(Data) , h_complex ) , noise )
+    g = np.abs(np.fft.fft(g_tilde))*4/len(frequencies)*deltaf
+
+    sumg = np.sum(iv(0,g))*1/(len(frequencies)*deltaf)
+    print(sumg)
+    #sumg = iv(0,np.sum(g))*1/(len(frequencies)*deltaf)
+    #Print out the maximal phi
+    #maxgindex = np.argmax( gmag )
+    #maxgcompl = g[maxgindex]
+    #print(np.arctan((maxgcompl).imag/(maxgcompl).real))
+
+    #Return the loglikelihood
+    return np.log(sumg) - SNR**2
+
+def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    #Construct template with random luminosity distance
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    DL = 100*mpc
+    template = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=0,collision_phase=0,Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+
+    #Construct preliminary waveform for template
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = template.calculate_waveform_vector(frequencies)
+    h_complex = amp*np.exp(-1j*phase)
+
+    #construct noise model
+    #noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
+    #noise_root =noise_func(frequencies)
+    #noise = np.multiply(noise_root, noise_root)
 
     #Fix snr of template to match the data
     snr_template = np.sqrt(4*simps(amp*amp/noise,frequencies).real)
