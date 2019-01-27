@@ -1658,6 +1658,12 @@ class IMRPhenomD_detector_frame(IMRPhenomD):
         self.DL = self.DL*snr_current/snr_target
         self.A0 = self.A0*oldDL/self.DL
         self.var_arr[0] = self.A0
+    def fix_snr_series(self,snr_target,frequencies,detector='aLIGO'):
+        snr_current = self.calculate_snr_series(detector=detector,frequencies=frequencies)
+        oldDL = self.DL
+        self.DL = self.DL*snr_current/snr_target
+        self.A0 = self.A0*oldDL/self.DL
+        self.var_arr[0] = self.A0
 
 if __name__ == "__main__":
     """Example code that generates a model with the parameters below, calculates GR Fisher and modified Fisher,

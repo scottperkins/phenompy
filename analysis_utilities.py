@@ -150,7 +150,7 @@ def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,s
     #model = imrdf(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=t_c,collision_phase=phi_c,
     #                Luminosity_Distance=DL, cosmo_model=cosmology,NSflag=NSflag)
     frequencies = np.asarray(frequencies)
-    model.fix_snr(snr_target=SNR,detector=detector,lower_freq=frequencies[0],upper_freq=frequencies[-1])
+    model.fix_snr_series(snr_target=SNR,detector=detector,frequencies=frequencies)
 
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)
     #h_complex = np.multiply(amp,np.add(np.cos(phase),-1j*np.sin(phase)))
@@ -201,12 +201,15 @@ def log_likelihood_maximized_coal(Data,frequencies,SNR,chirpm,symmratio, spin1,s
     #Note: tried to avoid this, but it seems mixing integration schemes causes issues 
     #   ie, using simps and sum interchangeably doesn't work. Need to use sum to normalize ifft
     snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)
+    #snr1 = np.sqrt(snr1sum*(frequencies[-1]-frequencies[0])/len(frequencies))
+
+    #Print out the maximal phi
+    #maxgindex = np.argmax( gmag )
+    #maxgcompl = g[maxgindex]
+    #print(np.arctan((maxgcompl).imag/(maxgcompl).real))
 
     #Return the loglikelihood
-    maxgindex = np.argmax( gmag )
-    maxgcompl = g[maxgindex]
-    print(np.arctan((maxgcompl/4).imag/(maxgcompl/4).real)/np.pi)
-    return -(SNR**2-SNR**2*maxg/(snr1sum))
+    return -SNR**2*(1-maxg/(snr1sum))
 
     #Development stuff - keep for the near term, delete eventually
     #snr1squared = simps(4*(Data*np.conjugate(Data))/noise,frequencies).real
