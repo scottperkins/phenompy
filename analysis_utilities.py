@@ -146,7 +146,7 @@ def log_likelihood(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin
     return -2*integral 
 ###########################################################################################
 ###########################################################################################
-def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,symmratio, spin1,spin2,
+def log_likelihood_detector_frame_SNR(Data,frequencies,noise, SNR, t_c,phi_c, chirpm,symmratio, spin1,spin2,
                 alpha_squared,bppe,NSflag,detector,cosmology=cosmology.Planck15):
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
@@ -160,19 +160,20 @@ def log_likelihood_detector_frame_SNR(Data,frequencies, SNR, t_c,phi_c, chirpm,s
     amp,phase,hreal = model.calculate_waveform_vector(frequencies)
     #h_complex = np.multiply(amp,np.add(np.cos(phase),-1j*np.sin(phase)))
     h_complex = amp*np.exp(-1j*phase)
-    noise_temp,noise_func, freq = model.populate_noise(detector=detector,int_scheme='quad')
+    #noise_temp,noise_func, freq = model.populate_noise(detector=detector,int_scheme='quad')
     resid = np.subtract(Data,h_complex)
     #integrand_numerator = np.multiply(np.conjugate(Data), h_complex) + np.multiply(Data,np.conjugate( h_complex))
     integrand_numerator = np.multiply(resid,np.conjugate(resid))
 
-    noise_root =noise_func(frequencies)
-    noise = np.multiply(noise_root, noise_root)
+    #noise_root =noise_func(frequencies)
+    #noise = np.multiply(noise_root, noise_root)
     integrand = np.divide(integrand_numerator,noise)
     integral = np.real(simps(integrand,frequencies))
     #integral = np.real(np.sum(integrand))
     return -2*integral 
 
-def log_likelihood_maximized_coal_ligo_version(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
+#log likelihood function that marginalizes over the extrinisic parameters phi_c and t_c
+def log_likelihood_marginalized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
                 alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
     deltaf = frequencies[1]-frequencies[0]
 
@@ -208,10 +209,11 @@ def log_likelihood_maximized_coal_ligo_version(Data,frequencies,noise,SNR,chirpm
 
     gmax = np.amax(g)
     sumg = np.sum(i0e(g)*np.exp(g-gmax))*1/(len(frequencies)*deltaf)
-    print(sumg, gmax/SNR**2,np.log(sumg))
+    #print(sumg, gmax/SNR**2,np.log(sumg))
     if sumg!=np.inf:
         return np.log(sumg) + gmax- SNR**2
     else:
+        #print("inf")
         items = bi(g)
         sumg = np.sum(items)*1/(len(frequencies)*deltaf)
         return log(sumg) - SNR**2
@@ -230,6 +232,8 @@ def log_likelihood_maximized_coal_ligo_version(Data,frequencies,noise,SNR,chirpm
     #Return the loglikelihood
     #return np.log(sumg)+gmax - SNR**2
 
+#log likelihood function that is evaluated at the values of the extrinsic parameters phi_c and t_c
+#that maximize the value of the log likelihood
 def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
                 alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
     deltaf = frequencies[1]-frequencies[0]
