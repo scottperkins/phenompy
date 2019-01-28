@@ -1,3 +1,4 @@
+import decimal
 import autograd.numpy as np
 import astropy.cosmology as cosmology
 from scipy.optimize import fsolve
@@ -17,8 +18,10 @@ import csv
 from scipy.interpolate import interp1d
 from time import time
 #import modified bessel function of the first kind
-from scipy.special import iv
+from scipy.special import i0e, i0
+from mpmath import besseli,log, matrix
 
+bi = np.vectorize(lambda x: besseli(0,x))
 s_solm = utilities.s_solm
 mpc = utilities.mpc
 """Useful functions for analysis of waveforms. NOT used for waveform production, like the utilities.py file.
@@ -201,10 +204,23 @@ def log_likelihood_maximized_coal_ligo_version(Data,frequencies,noise,SNR,chirpm
     #noise = np.insert(noise,0,np.conjugate(np.flip(noise)))
     #frequncies =np.insert(frequencies,0,-np.flip(frequencies)) 
     g_tilde = np.divide( np.multiply( np.conjugate(Data) , h_complex ) , noise )
-    g = np.abs(np.fft.fft(g_tilde))*4/len(frequencies)*deltaf
+    g = np.abs(np.fft.fft(g_tilde))*4*deltaf#/len(frequencies)
 
-    sumg = np.sum(iv(0,g))*1/(len(frequencies)*deltaf)
-    print(sumg)
+    gmax = np.amax(g)
+    sumg = np.sum(i0e(g)*np.exp(g-gmax))*1/(len(frequencies)*deltaf)
+    print(sumg, gmax/SNR**2,np.log(sumg))
+    if sumg!=np.inf:
+        return np.log(sumg) + gmax- SNR**2
+    else:
+        items = bi(g)
+        sumg = np.sum(items)*1/(len(frequencies)*deltaf)
+        return log(sumg) - SNR**2
+    #items = [besseli(0,x) for x in g]
+    #items = besseli(0,matrix(g))
+    #sumg = np.sum(besseli(0,g))*1/(len(frequencies)*deltaf)
+    #items = bi(g)
+    #sumg = np.sum(items)*1/(len(frequencies)*deltaf)
+
     #sumg = iv(0,np.sum(g))*1/(len(frequencies)*deltaf)
     #Print out the maximal phi
     #maxgindex = np.argmax( gmag )
@@ -212,10 +228,11 @@ def log_likelihood_maximized_coal_ligo_version(Data,frequencies,noise,SNR,chirpm
     #print(np.arctan((maxgcompl).imag/(maxgcompl).real))
 
     #Return the loglikelihood
-    return np.log(sumg) - SNR**2
+    #return np.log(sumg)+gmax - SNR**2
 
 def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
                 alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    deltaf = frequencies[1]-frequencies[0]
     #Construct template with random luminosity distance
     mass1 = utilities.calculate_mass1(chirpm,symmratio)
     mass2 = utilities.calculate_mass2(chirpm,symmratio)
@@ -237,17 +254,19 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     h_complex = SNR/snr_template * h_complex
 
     #Construct the inverse fourier transform of the inner product (D|h)
-    g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) , h_complex ) , noise )
+    g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,h_complex ) , noise )
     g = np.fft.ifft(g_tilde)
 
     #Maximize over tc and phic
     gmag = np.abs(g)
-    maxg = np.amax( gmag ).real*len(frequencies)
+    #maxg = np.amax( gmag ).real*len(frequencies)
+    maxg = np.amax( gmag ).real*(deltaf*len(frequencies))
+
     #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
     #with the normalization factors for the ifft
     #Note: tried to avoid this, but it seems mixing integration schemes causes issues 
     #   ie, using simps and sum interchangeably doesn't work. Need to use sum to normalize ifft
-    snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)
+    #snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)
     #snr1 = np.sqrt(snr1sum*(frequencies[-1]-frequencies[0])/len(frequencies))
 
     #Print out the maximal phi
@@ -256,7 +275,8 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     #print(np.arctan((maxgcompl).imag/(maxgcompl).real))
 
     #Return the loglikelihood
-    return -SNR**2*(1-maxg/(snr1sum))
+    #return -SNR**2*(1-maxg/(snr1sum))
+    return -(SNR**2-maxg)
 
     #Development stuff - keep for the near term, delete eventually
     #snr1squared = simps(4*(Data*np.conjugate(Data))/noise,frequencies).real
