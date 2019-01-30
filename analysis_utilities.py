@@ -304,6 +304,53 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     #return - (snr1squared+snr2squared-2*(snr1squared*snr2squared)**(1/2)*maxg/(snr1sum*snr2sum)**(1/2))
     #return maxg/SNR**2,SNR
 
+def log_likelihood_maximized_coal_ratio(Data,frequencies,noise,SNR,chirpm,symmratio, spin1,spin2,
+                alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    deltaf = frequencies[1]-frequencies[0]
+    #Construct template with random luminosity distance
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    DL = 100*mpc
+    template = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=0,collision_phase=0,Luminosity_Distance=DL, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+
+    #Construct preliminary waveform for template
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = template.calculate_waveform_vector(frequencies)
+    h_complex = amp*np.exp(-1j*phase)
+
+    #construct noise model
+    #noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
+    #noise_root =noise_func(frequencies)
+    #noise = np.multiply(noise_root, noise_root)
+
+    #Fix snr of template to match the data
+    snr_template = np.sqrt(4*simps(amp*amp/noise,frequencies).real)
+    h_complex = SNR/snr_template * h_complex
+
+    #Construct the inverse fourier transform of the inner product (D|h)
+    g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,h_complex ) , noise )
+    g = np.fft.ifft(g_tilde)
+
+    #Maximize over tc and phic
+    gmag = np.abs(g)
+    #maxg = np.amax( gmag ).real*len(frequencies)
+    maxg = np.amax( gmag ).real*(deltaf*len(frequencies))
+
+    #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
+    #with the normalization factors for the ifft
+    #Note: tried to avoid this, but it seems mixing integration schemes causes issues 
+    #   ie, using simps and sum interchangeably doesn't work. Need to use sum to normalize ifft
+    #snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)
+    #snr1 = np.sqrt(snr1sum*(frequencies[-1]-frequencies[0])/len(frequencies))
+
+    #Print out the maximal phi
+    #maxgindex = np.argmax( gmag )
+    #maxgcompl = g[maxgindex]
+    #print(np.arctan((maxgcompl).imag/(maxgcompl).real))
+
+    #Return the loglikelihood
+    #return -SNR**2*(1-maxg/(snr1sum))
+    return -(0.5*SNR**2-maxg)
 
 ###########################################################################################
 def log_likelihood_GR(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
