@@ -257,6 +257,13 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     snr_template = np.sqrt(4*simps(amp*amp/noise,frequencies).real)
     h_complex = SNR/snr_template * h_complex
 
+
+    #np.append(h_complex,np.zeros(100))
+    #np.insert(h_complex,np.zeros(100),0)
+    #np.append(noise,np.ones(100))
+    #np.insert(noise,np.ones(100),0)
+    #np.append(Data,np.zeros(100))
+    #np.insert(Data,np.zeros(100),0)
     #Construct the inverse fourier transform of the inner product (D|h)
     g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,h_complex ) , noise )
     g = np.fft.ifft(g_tilde)
