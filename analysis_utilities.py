@@ -258,15 +258,20 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     h_complex = SNR/snr_template * h_complex
 
 
-    #np.append(h_complex,np.zeros(100))
-    #np.insert(h_complex,np.zeros(100),0)
-    #np.append(noise,np.ones(100))
-    #np.insert(noise,np.ones(100),0)
-    #np.append(Data,np.zeros(100))
-    #np.insert(Data,np.zeros(100),0)
     #Construct the inverse fourier transform of the inner product (D|h)
     g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,h_complex ) , noise )
     g = np.fft.ifft(g_tilde)
+
+
+    #window = np.hamming(len(frequencies))
+    #g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,h_complex ) , noise )
+    #g_tilde = window*g_tilde
+    #g_tilde=np.pad(g_tilde,(10,10),'constant',constant_values=(0,0))
+    #g = np.fft.ifft(g_tilde)
+
+    #g_tilde2=np.fft.fft(g)#/len(frequencies)
+    #print(np.mean((g_tilde2-g_tilde))/np.mean(g_tilde))
+
 
     #Maximize over tc and phic
     gmag = np.abs(g)
