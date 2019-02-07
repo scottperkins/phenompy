@@ -231,6 +231,7 @@ class IMRPhenomD():
         dd1 = self.Damp_ins( f1,M,rho0,rho1,rho2,pn_amp)
         dd3 = self.Damp_mr(f3,gamma1,gamma2,gamma3,fRD,fdamp,M)
         
+        
         if i == 0: return utilities.calculate_delta_parameter_0(f1,f2,f3,v1,v2,v3,dd1,dd3,M)
 
         elif i ==1: return utilities.calculate_delta_parameter_1(f1,f2,f3,v1,v2,v3,dd1,dd3,M)
