@@ -60,7 +60,7 @@ def noise_decigo(f):
 
 
 ###########################################################################################
-# """Plot Noise Curves to check data etc"""
+"""Plot Noise Curves to check data etc"""
 #import matplotlib.pyplot as plt
 #names = [ 'aLIGO', 'A+', 'A++', 'Vrt', 'Voyager', 'CE1', 'CE2 wide', 'CE2 narrow', 'ET-B', 'ET-D']
 #fig,ax = plt.subplots()
