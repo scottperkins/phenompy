@@ -277,6 +277,7 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     gmag = np.abs(g)
     #maxg = np.amax( gmag ).real*len(frequencies)
     maxg = np.amax( gmag ).real*(deltaf*len(frequencies))
+    print(maxg)
 
     #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
     #with the normalization factors for the ifft
