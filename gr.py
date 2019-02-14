@@ -952,6 +952,7 @@ class IMRPhenomD():
         return fisher,inv_fisher
 
     """Function for actual element integrand - 4*Re(dh/dtheta_i* dh/dtheta_j) - Vectorized"""
+    """Actual output : d A/ dtheta - i * A * d phase/d theta)"""
     def calculate_waveform_derivative_vector(self,freq,i):
         famp = self.split_freqs_amp(freq)
         fphase = self.split_freqs_phase(freq)
