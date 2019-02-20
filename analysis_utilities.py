@@ -246,7 +246,7 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     #Construct preliminary waveform for template
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = template.calculate_waveform_vector(frequencies)
-    h_complex = amp*np.exp(-1j*phase)
+    h_complex = amp*(np.exp(-1j*phase))
 
     #construct noise model
     #noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
@@ -277,7 +277,6 @@ def log_likelihood_maximized_coal(Data,frequencies,noise,SNR,chirpm,symmratio, s
     gmag = np.abs(g)
     #maxg = np.amax( gmag ).real*len(frequencies)
     maxg = np.amax( gmag ).real*(deltaf*len(frequencies))
-    print(maxg)
 
     #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
     #with the normalization factors for the ifft
