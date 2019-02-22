@@ -21,6 +21,13 @@ from time import time
 from scipy.special import i0e, i0
 from mpmath import besseli,log, matrix
 
+
+
+from pycbc.waveform import get_fd_waveform_sequence, get_fd_waveform, get_td_waveform
+from pycbc.waveform import fd_approximants, utils
+from pycbc.types import Array
+from pycbc.types import frequencyseries
+
 bi = np.vectorize(lambda x: besseli(0,x))
 s_solm = utilities.s_solm
 mpc = utilities.mpc
@@ -329,6 +336,13 @@ def log_likelihood_maximized_coal_ratio(Data,frequencies,noise,SNR,chirpm,symmra
     frequencies = np.asarray(frequencies)
     amp,phase,hreal = template.calculate_waveform_vector(frequencies)
     h_complex = amp*np.exp(-1j*phase)
+
+
+    
+
+
+
+
 
     #construct noise model
     #noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
