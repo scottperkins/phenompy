@@ -378,6 +378,94 @@ def log_likelihood_maximized_coal_ratio(Data,frequencies,noise,SNR,chirpm,symmra
     #return -SNR**2*(1-maxg/(snr1sum))
     return -(0.5*SNR**2-maxg)
 
+#log likelihood function that is evaluated at the values of the extrinsic parameters phi_c and t_c
+#that maximize the value of the log likelihood
+#all quantities in seconds
+def log_likelihood_maximized_coal_Full_Param(Data,frequencies,noise,chirpm,symmratio, spin1,spin2,Luminosity_Distance, theta, phi, iota,
+                alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    deltaf = frequencies[1]-frequencies[0]
+    #Construct template with random luminosity distance
+    #mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    #mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    #template = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=0,collision_phase=0,Luminosity_Distance=Luminosity_Distance, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+
+    #Construct preliminary waveform for template
+    #frequencies = np.asarray(frequencies)
+    #amp,phase,hreal = template.calculate_waveform_vector(frequencies)
+    #h_complex = amp*(np.exp(-1j*phase))
+
+    #construct noise model
+    #noise_temp,noise_func, freq = template.populate_noise(detector=detector,int_scheme='quad')
+    #noise_root =noise_func(frequencies)
+    #noise = np.multiply(noise_root, noise_root)
+
+    #Fix snr of template to match the data
+    #snr_template = np.sqrt(4*simps(amp*amp/noise,frequencies).real)
+    #h_complex = SNR/snr_template * h_complex
+    
+    #Fplus = (1/2)*(1+np.cos(theta)**2)*np.cos(2*phi)
+    #Fcross = np.cos(theta)*np.sin(2*phi)
+    #Q  = (1+np.cos(iota)**2)/2 * Fplus + 1j*Fcross * np.cos(iota) 
+    #template_detector_response = h_complex * Q 
+    template_detector_response = detector_response_dCS(frequencies,chirpm,symmratio, spin1,spin2,Luminosity_Distance, theta, phi, iota,
+                alpha_squared,bppe,NSflag,cosmology)
+
+    int1 =  4 * simps( ( np.conjugate(template_detector_response)*template_detector_response).real/noise) 
+    snr_template = np.sqrt( int1 )
+    int2 = 4 * simps( ( np.conjugate(Data)*template_detector_response).real/noise)
+    SNR = int2/snr_template
+
+    #Construct the inverse fourier transform of the inner product (D|h)
+    g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,template_detector_response) , noise )
+    g = np.fft.ifft(g_tilde)
+
+
+    #window = np.hamming(len(frequencies))
+    #g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,h_complex ) , noise )
+    #g_tilde = window*g_tilde
+    #g_tilde=np.pad(g_tilde,(10,10),'constant',constant_values=(0,0))
+    #g = np.fft.ifft(g_tilde)
+
+    #g_tilde2=np.fft.fft(g)#/len(frequencies)
+    #print(np.mean((g_tilde2-g_tilde))/np.mean(g_tilde))
+
+
+    #Maximize over tc and phic
+    gmag = np.abs(g)
+    #maxg = np.amax( gmag ).real*len(frequencies)
+    maxg = np.amax( gmag ).real*(deltaf*len(frequencies))
+
+    #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
+    #with the normalization factors for the ifft
+    #Note: tried to avoid this, but it seems mixing integration schemes causes issues 
+    #   ie, using simps and sum interchangeably doesn't work. Need to use sum to normalize ifft
+    #snr1sum = np.sum((4*(Data*np.conjugate(Data))/noise).real)
+    #snr1 = np.sqrt(snr1sum*(frequencies[-1]-frequencies[0])/len(frequencies))
+
+    #Print out the maximal phi
+    #maxgindex = np.argmax( gmag )
+    #maxgcompl = g[maxgindex]
+    #print(np.arctan((maxgcompl).imag/(maxgcompl).real))
+
+    #Return the loglikelihood
+    #return -SNR**2*(1-maxg/(snr1sum))
+    return -(1/2) * (SNR**2 + snr_template**2 -2* maxg)
+
+#Detector response, all quantities in seconds
+def detector_response_dCS(frequencies,chirpm,symmratio, spin1,spin2,Luminosity_Distance, theta, phi, iota,
+                alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    mass1 = utilities.calculate_mass1(chirpm,symmratio)
+    mass2 = utilities.calculate_mass2(chirpm,symmratio)
+    template = dcsimr_detector_frame(mass1=mass1,mass2=mass2, spin1=spin1,spin2=spin2, collision_time=0,collision_phase=0,Luminosity_Distance=Luminosity_Distance, phase_mod=alpha_squared, cosmo_model=cosmology,NSflag=NSflag)
+    frequencies = np.asarray(frequencies)
+    amp,phase,hreal = template.calculate_waveform_vector(frequencies)
+    h_complex = amp*(np.exp(-1j*phase))
+
+    Fplus = (1/2)*(1+np.cos(theta)**2)*np.cos(2*phi)
+    Fcross = np.cos(theta)*np.sin(2*phi)
+    Q  = (1+np.cos(iota)**2)/2 * Fplus + 1j*Fcross * np.cos(iota) 
+    template_detector_response = h_complex * Q 
+    return template_detector_response
 ###########################################################################################
 def log_likelihood_GR(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
                 NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
