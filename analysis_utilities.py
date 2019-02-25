@@ -411,12 +411,12 @@ def log_likelihood_maximized_coal_Full_Param(Data,frequencies,noise,chirpm,symmr
                 alpha_squared,bppe,NSflag,cosmology)
 
     HH =  4 * simps( ( np.conjugate(template_detector_response)*template_detector_response).real/noise,frequencies) 
-    snr_template = np.sqrt( HH )
+    #snr_template = np.sqrt( HH )
     #template_detector_response = template_detector_response*93.5088/snr_template
     #HH = 93.5088**2
     #int2 = 4 * simps( ( np.conjugate(Data)*template_detector_response).real/noise)
     DD = 4 * simps( ( np.conjugate(Data)*Data).real/noise,frequencies)
-    SNR  = np.sqrt(DD)
+    #SNR  = np.sqrt(DD)
     #SNR = int2/snr_template
 
     #Construct the inverse fourier transform of the inner product (D|h)
