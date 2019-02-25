@@ -410,10 +410,14 @@ def log_likelihood_maximized_coal_Full_Param(Data,frequencies,noise,chirpm,symmr
     template_detector_response = detector_response_dCS(frequencies,chirpm,symmratio, spin1,spin2,Luminosity_Distance, theta, phi, iota,
                 alpha_squared,bppe,NSflag,cosmology)
 
-    int1 =  4 * simps( ( np.conjugate(template_detector_response)*template_detector_response).real/noise) 
-    snr_template = np.sqrt( int1 )
-    int2 = 4 * simps( ( np.conjugate(Data)*template_detector_response).real/noise)
-    SNR = int2/snr_template
+    HH =  4 * simps( ( np.conjugate(template_detector_response)*template_detector_response).real/noise,frequencies) 
+    snr_template = np.sqrt( HH )
+    #template_detector_response = template_detector_response*93.5088/snr_template
+    #HH = 93.5088**2
+    #int2 = 4 * simps( ( np.conjugate(Data)*template_detector_response).real/noise)
+    DD = 4 * simps( ( np.conjugate(Data)*Data).real/noise,frequencies)
+    SNR  = np.sqrt(DD)
+    #SNR = int2/snr_template
 
     #Construct the inverse fourier transform of the inner product (D|h)
     g_tilde = 4*np.divide( np.multiply( np.conjugate(Data) ,template_detector_response) , noise )
@@ -433,7 +437,7 @@ def log_likelihood_maximized_coal_Full_Param(Data,frequencies,noise,chirpm,symmr
     #Maximize over tc and phic
     gmag = np.abs(g)
     #maxg = np.amax( gmag ).real*len(frequencies)
-    maxg = np.amax( gmag ).real*(deltaf*len(frequencies))
+    maxg = np.amax( gmag ).real*len(frequencies)*(deltaf)
 
     #Construct the SNR in the Riemann sum approximation - Noramlization factors were combined
     #with the normalization factors for the ifft
@@ -449,7 +453,8 @@ def log_likelihood_maximized_coal_Full_Param(Data,frequencies,noise,chirpm,symmr
 
     #Return the loglikelihood
     #return -SNR**2*(1-maxg/(snr1sum))
-    return -(1/2) * (SNR**2 + snr_template**2 -2* maxg)
+    #print(DD,HH,maxg, chirpm/s_solm)
+    return -(1/2) * (DD + HH -2* maxg)
 
 #Detector response, all quantities in seconds
 def detector_response_dCS(frequencies,chirpm,symmratio, spin1,spin2,Luminosity_Distance, theta, phi, iota,
@@ -466,6 +471,26 @@ def detector_response_dCS(frequencies,chirpm,symmratio, spin1,spin2,Luminosity_D
     Q  = (1+np.cos(iota)**2)/2 * Fplus + 1j*Fcross * np.cos(iota) 
     template_detector_response = h_complex * Q 
     return template_detector_response
+
+#Data SNR = (D|h)/(h|h)**(1/2)
+def data_snr_maximized_extrinsic(frequencies,data,detector, chirpm,symmratio, spin1,spin2,
+                                Luminosity_Distance, theta, phi, iota,
+                                alpha_squared,bppe,NSflag,cosmology=cosmology.Planck15):
+    noise_temp, noisefunc, f = IMRPhenomD.populate_noise(detector,int_scheme='quad')
+    noise = noisefunc(frequencies)**2
+
+    template_detector_response = detector_response_dCS(frequencies,chirpm,symmratio, 
+                                    spin1,spin2,Luminosity_Distance, theta, phi, iota,alpha_squared,
+                                    bppe,NSflag, cosmology)
+    int1 =  4 * simps( ( np.conjugate(template_detector_response)*template_detector_response).real/noise,frequencies)
+    snr_template = np.sqrt( int1 )
+
+    g_tilde = 4*np.divide( np.multiply( np.conjugate(data) ,template_detector_response) , noise ) 
+    g = np.fft.ifft(g_tilde) 
+    gmag = np.abs(g) 
+    deltaf = frequencies[1]-frequencies[0] 
+    maxg = np.amax( gmag ).real*(len(frequencies))*(deltaf)
+    return maxg/snr_template
 ###########################################################################################
 def log_likelihood_GR(Data,frequencies, DL, t_c,phi_c, chirpm,symmratio, spin1,spin2,
                 NSflag,N_detectors,detector,cosmology=cosmology.Planck15):
