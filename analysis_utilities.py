@@ -454,7 +454,8 @@ def log_likelihood_maximized_coal_Full_Param(Data,frequencies,noise,chirpm,symmr
     #Return the loglikelihood
     #return -SNR**2*(1-maxg/(snr1sum))
     #print(DD,HH,maxg, chirpm/s_solm)
-    return -(1/2) * (DD + HH -2* maxg)
+    #return -(1/2) * (DD + HH -2* maxg)
+    return -(1/2) * ( HH -2* maxg)
 
 #Detector response, all quantities in seconds
 def detector_response_dCS(frequencies,chirpm,symmratio, spin1,spin2,Luminosity_Distance, theta, phi, iota,
