@@ -91,7 +91,8 @@ class IMRPhenomD():
         self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
-        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
         self.totalMass_restframe = mass1+mass2
         """Spin Variables"""
         self.chi1 = spin1
@@ -1607,7 +1608,8 @@ class IMRPhenomD_detector_frame(IMRPhenomD):
         self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
-        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
         self.totalMass_restframe =None# mass1+mass2
         """Spin Variables"""
         self.chi1 = spin1

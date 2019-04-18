@@ -54,7 +54,8 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
         self.totalMass_restframe = mass1+mass2
-        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
 
         """Spin Variables"""
         self.chi1 = spin1
@@ -172,7 +173,7 @@ class Modified_IMRPhenomD_Full_Freq(IMRPhenomD):
     ######################################################################################
     """Added Phase Modification"""
     def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
-        return (super(Modified_IMRPhenomD_Full_Freq,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)+phase_mod*(chirpm*np.pi*f)**(self.bppe/3))
+        return (super(Modified_IMRPhenomD_Full_Freq,self).phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase) + phase_mod*(chirpm*np.pi*f)**(self.bppe/3))
     def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
         return (super(Modified_IMRPhenomD_Full_Freq,self).Dphi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)+phase_mod*(chirpm*np.pi)**(self.bppe/3)*f**(self.bppe/3-1)*(self.bppe/3))
 
@@ -607,7 +608,8 @@ class Modified_IMRPhenomD_Full_Freq_detector_frame(Modified_IMRPhenomD_Full_Freq
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
         self.totalMass_restframe = mass1+mass2
-        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
 
         """Spin Variables"""
         self.chi1 = spin1
@@ -1193,7 +1195,8 @@ class Modified_IMRPhenomD_All_Transition_Freq(IMRPhenomD):
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
         self.totalMass_restframe = mass1+mass2
-        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
 
         """Spin Variables"""
         self.chi1 = spin1
@@ -1709,3 +1712,59 @@ class dCS_IMRPhenomD_detector_frame(Modified_IMRPhenomD_Inspiral_Freq_detector_f
         return (IMRPhenomD.Dphi_ins(
                 self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
                 + 16*np.pi*phase_mod * utilities.dCS_g(chirpm,symmratio,chi_s,chi_a)/m**4 * (np.pi * chirpm)**(self.bppe/3)*(self.bppe/3)*f**(self.bppe/3 -1))
+
+
+#Phase_mod = alpha**2, as defined by arXiv:1603.08955v2
+class EdGB_IMRPhenomD_detector_frame(Modified_IMRPhenomD_Inspiral_Freq_detector_frame):
+    def __init__(self, mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = 0,
+                    cosmo_model = cosmology.Planck15,NSflag = False,N_detectors = 1):
+        super(EdGB_IMRPhenomD_detector_frame,self).__init__(mass1, mass2,spin1,spin2, collision_time,
+                    collision_phase,Luminosity_Distance,phase_mod = phase_mod,bppe = -7,
+                    cosmo_model = cosmo_model,NSflag = NSflag,N_detectors = N_detectors)
+    def phi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        m = utilities.calculate_totalmass(chirpm,symmratio)
+        m1 = utilities.calculate_mass1(chirpm,symmratio)
+        m2 = utilities.calculate_mass2(chirpm,symmratio)
+        chi1 = chi_s+ chi_a
+        chi2 = chi_s- chi_a
+        temp1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)
+        temp2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)
+        chi1 = chi1 + 1e-10
+        chi2 = chi2 + 1e-10
+        s1 =temp1 /chi1**2
+        s2 = temp2/chi2**2
+        #if chi1 != 0:
+        #    s1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)/chi1**2
+        #else:
+        #    s1 = 0
+        #if chi2 != 0:
+        #    s2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)/chi2**2
+        #else:
+        #    s2 =0
+        return (IMRPhenomD.phi_ins(
+                self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+                + (-5/7168)*16*np.pi*phase_mod/m**4 * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18/5)) * (np.pi * chirpm* f)**(self.bppe/3))
+    def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
+        m = utilities.calculate_totalmass(chirpm,symmratio)
+        m1 = utilities.calculate_mass1(chirpm,symmratio)
+        m2 = utilities.calculate_mass2(chirpm,symmratio)
+        chi1 = chi_s+ chi_a
+        chi2 = chi_s- chi_a
+        temp1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)
+        temp2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)
+        chi1 = chi1 + 1e-10
+        chi2 = chi2 + 1e-10
+        s1 =temp1 /chi1**2
+        s2 = temp2/chi2**2
+        #if chi1 != 0:
+        #    s1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)/chi1**2
+        #else:
+        #    s1 = 0
+        #if chi2 != 0:
+        #    s2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)/chi2**2
+        #else:
+        #    s2 =0
+        return (IMRPhenomD.Dphi_ins(
+                self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
+                + (-5/7168)*16*np.pi*phase_mod/m**4 * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18/5)) * (np.pi * chirpm)**(self.bppe/3)*(self.bppe/3)*f**(self.bppe/3 -1))
