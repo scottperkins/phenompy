@@ -2,6 +2,10 @@ import autograd.numpy as np
 import astropy.constants as consts
 import astropy.cosmology as cosmology
 from astropy.coordinates import Distance
+from scipy.interpolate import UnivariateSpline
+import os
+import csv
+from autograd.extend import primitive, defvjp
 
 """Euler's Number (Not in SciPy or NumPy Constants)"""
 gamma_E = 0.5772156649015328606065120900824024310421
@@ -21,6 +25,25 @@ H0 = cosmology.Planck15.H0#6780*10**(-2)/(3 * 10**5)#67.80/(3.086*10**19) #Hubbl
 hplanck = 4.135667662e-15 #ev s
 
 
+"""Path variables"""
+IMRPD_dir = os.path.dirname(os.path.realpath(__file__))
+IMRPD_tables_dir = IMRPD_dir + '/Data_Tables'
+"""Useful Functions from IMRPhenomD"""
+"""For Data imported below, see the script ./Data_Tables/tabulate_data.py for production of values and accuracy testing"""
+"""Read in tabulated data for the luminosity distance to Z conversion - tabulated and interpolated for speed"""
+LumDZ = [[],[]]
+with open(IMRPD_tables_dir+'/tabulated_LumD_Z.csv', 'r') as f:
+    reader = csv.reader(f,delimiter=',')
+    for row in reader:
+        LumDZ[0].append(float(row[0]))
+        LumDZ[1].append(float(row[1]))
+#Zfunc = interp1d(LumDZ[0],LumDZ[1])
+Zfunc = UnivariateSpline(LumDZ[0],LumDZ[1])
+Zfuncderiv = Zfunc.derivative()
+@primitive
+def Z_from_DL_interp(DL):
+    return Zfunc(DL)
+defvjp(Z_from_DL_interp, None,lambda ans, DL: lambda g: g*Zfuncderiv(DL))
 
 """Generic, short, simple functions that can be easily separated from a specific model"""
 ###########################################################################################

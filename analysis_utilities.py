@@ -3,19 +3,20 @@ import autograd.numpy as np
 import astropy.cosmology as cosmology
 from scipy.optimize import fsolve
 from scipy.integrate import simps
+from scipy.interpolate import UnivariateSpline 
+from scipy.interpolate import interp1d
 from phenompy.gr import IMRPhenomD
 from phenompy.gr import IMRPhenomD_detector_frame as imrdf
 from phenompy import utilities
 from phenompy.modified_gr import Modified_IMRPhenomD_Full_Freq as modimr
 from phenompy.modified_gr import Modified_IMRPhenomD_Inspiral_Freq as modimrins
-from phenompy.modified_gr import dCS_IMRPhenomD as dcsimr
+#from phenompy.modified_gr import dCS_IMRPhenomD as dcsimr
 from phenompy.modified_gr import dCS_IMRPhenomD_detector_frame as dcsimr_detector_frame
 import os
 import matplotlib.pyplot as plt
 from astropy.coordinates import Distance
 from astropy import units as u
 import csv
-from scipy.interpolate import interp1d
 from time import time
 #import modified bessel function of the first kind
 from scipy.special import i0e, i0
@@ -46,7 +47,8 @@ with open(IMRPD_tables_dir+'/tabulated_LumD_Z.csv', 'r') as f:
     for row in reader:
         LumDZ[0].append(float(row[0]))
         LumDZ[1].append(float(row[1]))
-Zfunc = interp1d(LumDZ[0],LumDZ[1])
+#Zfunc = interp1d(LumDZ[0],LumDZ[1])
+Zfunc = UnivariateSpline(LumDZ[0],LumDZ[1])
 
 """Read in the tabulated data for the integral in the cosmological distance defined in Will '97
  - Tabulated and interpolated for speed"""

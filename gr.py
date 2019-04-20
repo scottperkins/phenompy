@@ -91,8 +91,8 @@ class IMRPhenomD():
         self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
-        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
-        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
         self.totalMass_restframe = mass1+mass2
         """Spin Variables"""
         self.chi1 = spin1
@@ -436,6 +436,9 @@ class IMRPhenomD():
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
         pn_phase= []
+        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #DL = (np.pi*40./192.)**(1/2)*chirpm**2/A0 * (np.pi*chirpm)**(-7/6)
+        #self.Z = 
         for i in [0,1,2,3,4,5,6,7]:
             pn_phase.append( self.assign_pn_phase(chirpm,symmratio,delta,chi_a,chi_s,f,i))
         return self.phi_ins(f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
@@ -1608,8 +1611,8 @@ class IMRPhenomD_detector_frame(IMRPhenomD):
         self.M = utilities.calculate_totalmass(self.chirpm,self.symmratio)
         self.m1 = utilities.calculate_mass1(self.chirpm,self.symmratio)
         self.m2 = utilities.calculate_mass2(self.chirpm,self.symmratio)
-        #self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
-        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        self.A0 =(np.pi/30)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
         self.totalMass_restframe =None# mass1+mass2
         """Spin Variables"""
         self.chi1 = spin1
