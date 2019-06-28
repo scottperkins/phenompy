@@ -2022,7 +2022,6 @@ class dCS_IMRPhenomD_detector_frame(Modified_IMRPhenomD_Quadratic_Base_Inspiral_
         m = utilities.calculate_totalmass(chirpm,symmratio)
         DL =(np.pi/30)**(1/2)*chirpm**2/A0 * (np.pi*chirpm)**(-7/6)
         Z = utilities.Z_from_DL_interp(DL/mpc)
-        #print(Z)
         m_redshifted = m / (1+Z)
         return (IMRPhenomD.phi_ins(
                 self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
@@ -2054,27 +2053,9 @@ class EdGB_IMRPhenomD_detector_frame(Modified_IMRPhenomD_Quadratic_Base_Inspiral
         Z = utilities.Z_from_DL_interp(DL/mpc)
         m_redshifted = m / (1+Z)
 
-        m1 = utilities.calculate_mass1(chirpm,symmratio)
-        m2 = utilities.calculate_mass2(chirpm,symmratio)
-        chi1 = chi_s+ chi_a
-        chi2 = chi_s- chi_a
-        temp1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)
-        temp2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)
-        chi1 = chi1 + 1e-10
-        chi2 = chi2 + 1e-10
-        s1 =temp1 /chi1**2
-        s2 = temp2/chi2**2
-        #if chi1 != 0:
-        #    s1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)/chi1**2
-        #else:
-        #    s1 = 0
-        #if chi2 != 0:
-        #    s2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)/chi2**2
-        #else:
-        #    s2 =0
         return (IMRPhenomD.phi_ins(
                 self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
-                + (-5/7168)*16*np.pi*phase_mod/m_redshifted**4 * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18/5)) * (np.pi * chirpm* f)**(self.bppe/3))
+                + 16*np.pi*phase_mod/m_redshifted**4 * utilities.EdGB_g(chirpm,symmratio,chi_s,chi_a) * (np.pi * chirpm* f)**(self.bppe/3))
     #def Dphi_ins(self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
     def Dphi_ins(self,f,A0,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase,phase_mod):
         m = utilities.calculate_totalmass(chirpm,symmratio)
@@ -2082,24 +2063,6 @@ class EdGB_IMRPhenomD_detector_frame(Modified_IMRPhenomD_Quadratic_Base_Inspiral
         Z = utilities.Z_from_DL_interp(DL/mpc)
         m_redshifted = m / (1+Z)
 
-        m1 = utilities.calculate_mass1(chirpm,symmratio)
-        m2 = utilities.calculate_mass2(chirpm,symmratio)
-        chi1 = chi_s+ chi_a
-        chi2 = chi_s- chi_a
-        temp1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)
-        temp2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)
-        chi1 = chi1 + 1e-10
-        chi2 = chi2 + 1e-10
-        s1 =temp1 /chi1**2
-        s2 = temp2/chi2**2
-        #if chi1 != 0:
-        #    s1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)/chi1**2
-        #else:
-        #    s1 = 0
-        #if chi2 != 0:
-        #    s2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)/chi2**2
-        #else:
-        #    s2 =0
         return (IMRPhenomD.Dphi_ins(
                 self,f,phic,tc,chirpm,symmratio,delta,chi_a,chi_s,sigma2,sigma3,sigma4,pn_phase)
-                + (-5/7168)*16*np.pi*phase_mod/m_redshifted**4 * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18/5)) * (np.pi * chirpm)**(self.bppe/3)*(self.bppe/3)*f**(self.bppe/3 -1))
+                + 16*np.pi*phase_mod/m_redshifted**4 * utilities.EdGB_g(chirpm,symmratio,chi_s,chi_a) * (np.pi * chirpm)**(self.bppe/3)*(self.bppe/3)*f**(self.bppe/3 -1))

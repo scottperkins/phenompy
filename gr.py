@@ -436,7 +436,7 @@ class IMRPhenomD():
         sigma3 =self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,9)
         sigma4 = self.assign_lambda_param(chirpm,symmratio,chi_a,chi_s,10)
         pn_phase= []
-        self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
+        #self.A0 =(np.pi*40./192.)**(1/2)*self.chirpm**2/self.DL * (np.pi*self.chirpm)**(-7/6)
         #DL = (np.pi*40./192.)**(1/2)*chirpm**2/A0 * (np.pi*chirpm)**(-7/6)
         #self.Z = 
         for i in [0,1,2,3,4,5,6,7]:

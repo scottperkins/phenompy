@@ -2,10 +2,11 @@ import autograd.numpy as np
 import astropy.constants as consts
 import astropy.cosmology as cosmology
 from astropy.coordinates import Distance
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 import os
 import csv
 from autograd.extend import primitive, defvjp
+import matplotlib.pyplot as plt
 
 """Euler's Number (Not in SciPy or NumPy Constants)"""
 gamma_E = 0.5772156649015328606065120900824024310421
@@ -37,13 +38,22 @@ with open(IMRPD_tables_dir+'/tabulated_LumD_Z.csv', 'r') as f:
     for row in reader:
         LumDZ[0].append(float(row[0]))
         LumDZ[1].append(float(row[1]))
-#Zfunc = interp1d(LumDZ[0],LumDZ[1])
-Zfunc = UnivariateSpline(LumDZ[0],LumDZ[1])
-Zfuncderiv = Zfunc.derivative()
+#Zfunc = UnivariateSpline(LumDZ[0],LumDZ[1])
+#Zfuncderiv = Zfunc.derivative()
+Zfunc = interp1d(LumDZ[0],LumDZ[1])
+def Zfuncderiv(dl):
+    epsilon = 1e-5;
+    return (Zfunc(dl+epsilon)-Zfunc(dl-epsilon))/(epsilon*2)
+#x = np.linspace(10,1000,100000)
+#plt.plot(x,Zfunc(x))
+#plt.plot(LumDZ[0],LumDZ[1])
+#plt.show()
+plt.close()
 @primitive
 def Z_from_DL_interp(DL):
     return Zfunc(DL)
 defvjp(Z_from_DL_interp, None,lambda ans, DL: lambda g: g*Zfuncderiv(DL))
+
 
 """Generic, short, simple functions that can be easily separated from a specific model"""
 ###########################################################################################
@@ -256,7 +266,7 @@ def calculate_delta_parameter_4(f1,f2,f3,v1,v2,v3,dd1,dd3,M):
 #dCS g func for phase modification - \delta \phi = Zeta *g(eta,chirp mass, chi_s, chi_a) (\pi chirpm f)**(-1/3)
 ###########################################################################################
 #1603.08955
-def dCS_g(chirpm,symmratio,chi_s,chi_a): 
+def dCS_g_old(chirpm,symmratio,chi_s,chi_a): 
     coeff = 1549225/11812864 
     m1 = calculate_mass1(chirpm,symmratio) 
     m2 = calculate_mass2(chirpm,symmratio) 
@@ -264,3 +274,40 @@ def dCS_g(chirpm,symmratio,chi_s,chi_a):
     delta = (m1-m2)/m 
     return coeff/symmratio**(14/5) * ( ( 1-231808/61969 * symmratio)*chi_s**2 + 
             (1 - 16068/61969 *symmratio)*chi_a**2 - 2 * delta * chi_s * chi_a)
+def dCS_g(chirpm,symmratio,chi_s,chi_a): 
+    g=0
+
+    coeff1 = -5./8192. 
+    coeff2 = 15075./114688.
+    m1 = calculate_mass1(chirpm,symmratio) 
+    m2 = calculate_mass2(chirpm,symmratio) 
+    m = calculate_totalmass(chirpm,symmratio) 
+    chi1 = chi_s+chi_a
+    chi2 = chi_s-chi_a
+    s1temp = 2+2*chi1**4 - 2.*(1-chi1**2)**(1./2) - chi1**2 * (3. - 2.*(1.-chi1**2)**(1./2))
+    s2temp = 2+2*chi2**4 - 2.*(1-chi2**2)**(1./2) - chi2**2 * (3. - 2.*(1.-chi2**2)**(1./2))
+    chi1 +=1e-10
+    chi2 +=1e-10
+    s1  = s1temp/(2.*chi1**3)
+    s2  = s2temp/(2.*chi2**3)
+
+    g+=coeff1/symmratio**(14./5) * (m1*s2 - m2 * s1)**2/m**2 
+    g+=coeff2/symmratio**(14./5) * (m2**2* chi1**2 - 305./201. * m1*m2*chi1*chi2 + m1**2 * chi2**2)/m**2
+    return g
+
+def EdGB_g(chirpm,symmratio,chi_s,chi_a):
+    g =0
+
+    m = calculate_totalmass(chirpm,symmratio)
+    m1 = calculate_mass1(chirpm,symmratio)
+    m2 = calculate_mass2(chirpm,symmratio)
+    chi1 = chi_s+ chi_a
+    chi2 = chi_s- chi_a
+    temp1 = 2*(np.sqrt(1-chi1**2) - 1 + chi1**2)
+    temp2 = 2*(np.sqrt(1-chi2**2) - 1 + chi2**2)
+    chi1 = chi1 + 1e-10
+    chi2 = chi2 + 1e-10
+    s1 =temp1 /chi1**2
+    s2 = temp2/chi2**2
+    g += (-5./7168) * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18/5)) 
+    return g
