@@ -14,9 +14,9 @@ import astropy.cosmology as cosmology
 show_plots = True
 
 #Defining Parameters for the model 
-dl = 420*mpc
-mass1 =36*s_solm
-mass2 =29*s_solm
+dl = 1000*mpc
+mass1 =6e6*s_solm
+mass2 =4e6*s_solm
 spin1 = 0.32
 spin2 = 0.44
 detect = 'aLIGO'#This will be the detector for calculating Fisher Matricies
@@ -31,7 +31,8 @@ model1.calculate_derivatives()
 
 
 # Plot Example Output
-frequencies = np.linspace(1,5000,1e6)
+#frequencies = np.linspace(1,5000,1e6)
+frequencies = np.linspace(1e-4,.1,1e6)
 #Calculates the waveform - 
 Amp,phase,h = model1.calculate_waveform_vector(frequencies)
 
