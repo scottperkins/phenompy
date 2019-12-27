@@ -292,7 +292,8 @@ def dCS_g(chirpm,symmratio,chi_s,chi_a):
     s2  = s2temp/(2.*chi2**3)
 
     g+=coeff1/symmratio**(14./5) * (m1*s2 - m2 * s1)**2/m**2 
-    g+=coeff2/symmratio**(14./5) * (m2**2* chi1**2 - 305./201. * m1*m2*chi1*chi2 + m1**2 * chi2**2)/m**2
+    #g+=coeff2/symmratio**(14./5) * (m2**2* chi1**2 - 305./201. * m1*m2*chi1*chi2 + m1**2 * chi2**2)/m**2
+    g+=coeff2/symmratio**(14./5) * (m2**2* chi1**2 - 350./201. * m1*m2*chi1*chi2 + m1**2 * chi2**2)/m**2
     return g
 
 def EdGB_g(chirpm,symmratio,chi_s,chi_a):
@@ -309,5 +310,5 @@ def EdGB_g(chirpm,symmratio,chi_s,chi_a):
     chi2 = chi2 + 1e-10
     s1 =temp1 /chi1**2
     s2 = temp2/chi2**2
-    g += (-5./7168) * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18/5)) 
+    g += (-5./7168) * (m1**2 * s2 - m2**2 * s1)**2 / (m**4 * symmratio**(18./5)) 
     return g

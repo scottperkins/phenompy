@@ -66,7 +66,7 @@ def noise_decigo(f):
 #fig,ax = plt.subplots()
 #for i in np.arange(len(noise[1:])):
 #    ax.plot(noise[0],noise[i+1],label = names[i])
-#
+
 #ax.plot(np.linspace(10.,2500,1e5),noise_hanford_O1(np.linspace(10.,2000,1e5)),label='fitted Hanford Noise',linestyle='--')
 #
 #ax.plot(np.linspace(1e-3,100,1e5),noise_decigo(np.linspace(1e-3,100,1e5)),label='DECIGO',linestyle='-.')
@@ -79,6 +79,7 @@ def noise_decigo(f):
 #ax.set_ylabel(r'$S^{1/2}$')
 #ax.set_xlabel('Frequency (Hz)')
 #ax.legend()
-#plt.show()
+##plt.show()
+#plt.savefig("noise_curves.pdf")
 #plt.close()
 ###########################################################################################
